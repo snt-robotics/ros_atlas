@@ -1,9 +1,10 @@
 #pragma once
 
+#include "filters.h"
 #include "sensorlistener.h"
+
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graph_traits.hpp>
-#include <boost/graph/labeled_graph.hpp>
 #include <ros/time.h>
 #include <tf2/LinearMath/Transform.h>
 
@@ -33,6 +34,8 @@ struct EdgeInfo
     SensorData sensorData;
 };
 
+std::ostream& operator<<(std::ostream& os, const EdgeInfo& info);
+
 struct NodeInfo
 {
     std::string name;
@@ -40,6 +43,10 @@ struct NodeInfo
     // world pose
     tf2::Vector3 pos;
     tf2::Quaternion rot;
+
+    //
+    WeightedMean filter;
+    bool evaluated = false;
 };
 
 class TransformGraph
@@ -53,17 +60,17 @@ class TransformGraph
 
     struct pose_t
     {
-        typedef boost::edge_property_tag kind;
+        typedef boost::vertex_property_tag kind;
     };
 
-    using NodeProp       = boost::property<pose_t, NodeInfo>;
-    using EdgePropInfo   = boost::property<info_t, EdgeInfo>;
-    using EdgeProp       = boost::property<boost::edge_weight_t, double, EdgePropInfo>;
-    using Graph          = boost::adjacency_list<boost::multisetS, boost::listS, boost::bidirectionalS, NodeInfo, EdgeProp, boost::multisetS>;
-    using LabeledGraph   = boost::labeled_graph<Graph, std::string>;
-    using Vertex         = boost::graph_traits<LabeledGraph>::vertex_descriptor;
-    using Edge           = boost::graph_traits<LabeledGraph>::edge_descriptor;
-    using VertexIterator = boost::graph_traits<LabeledGraph>::vertex_iterator;
+    using vertex_descriptor = boost::adjacency_list_traits<boost::listS, boost::listS, boost::directedS>::vertex_descriptor;
+    using NodeProp          = boost::property<boost::vertex_index_t, int, boost::property<boost::vertex_name_t, std::string, boost::property<boost::vertex_distance_t, int, boost::property<boost::vertex_predecessor_t, vertex_descriptor, boost::property<pose_t, NodeInfo> > > > >;
+    using EdgePropInfo      = boost::property<info_t, EdgeInfo>;
+    using EdgeProp          = boost::property<boost::edge_weight_t, double, EdgePropInfo>;
+    using Graph             = boost::adjacency_list<boost::multisetS, boost::listS, boost::bidirectionalS, NodeProp, EdgeProp, boost::multisetS>;
+    using Vertex            = boost::graph_traits<Graph>::vertex_descriptor;
+    using Edge              = boost::graph_traits<Graph>::edge_descriptor;
+    using VertexIterator    = boost::graph_traits<Graph>::vertex_iterator;
 
     struct RemovePredicate
     {
@@ -75,23 +82,11 @@ class TransformGraph
 
         const MeasurementKey& key;
         const Graph& graph;
-        mutable bool stop = false;
 
         bool operator()(const Edge& edge) const
         {
-            if (stop)
-                return false;
-
             const auto& infoMap = boost::get(info_t(), graph);
-
-            stop = infoMap[edge].sensorData.key == key;
-
-            if (stop)
-            {
-                std::cout << "remove edge " << key.entity << key.sensor << " edge " << edge << std::endl;
-            }
-
-            return stop;
+            return infoMap[edge].sensorData.key == key;
         }
     };
 
@@ -111,6 +106,12 @@ public:
 
     std::size_t numberOfEdges() const;
 
+    void eval();
+
+    void save(const std::string& filename);
+
 private:
-    LabeledGraph m_graph;
+    Graph m_graph;
+    std::map<std::string, Vertex> m_labeledVertex;
+    int m_vCount = 0;
 };

@@ -1,6 +1,7 @@
 #include "transformgraph.h"
 
 #include <boost/graph/dijkstra_shortest_paths.hpp>
+#include <boost/graph/graphviz.hpp>
 
 TransformGraph::TransformGraph()
 {
@@ -9,8 +10,13 @@ TransformGraph::TransformGraph()
 void TransformGraph::addEntity(const std::string& name)
 {
     // adding entities is like adding vertices to the graph
-    boost::add_vertex(name, m_graph);
-    m_graph[name].name = name;
+    auto vertex           = boost::add_vertex(m_graph);
+    m_labeledVertex[name] = vertex;
+
+    auto names            = boost::get(boost::vertex_name, m_graph);
+    auto vertexIndices    = boost::get(boost::vertex_index, m_graph);
+    names[vertex]         = name;
+    vertexIndices[vertex] = m_vCount++;
 }
 
 void TransformGraph::updateSensorData(const std::string& from, const std::string& to, const SensorData& sensorData)
@@ -20,26 +26,21 @@ void TransformGraph::updateSensorData(const std::string& from, const std::string
     removeEdgeByKey(sensorData.key);
 
     // edges do not exist, add them
-    auto info  = EdgeInfo(sensorData);
-    auto forth = boost::add_edge_by_label(from, to, { 1.0, info }, m_graph);
-    auto back  = boost::add_edge_by_label(to, from, { 1.0, info.inverse() }, m_graph);
+    auto info = EdgeInfo(sensorData);
+
+    boost::add_edge(m_labeledVertex[from], m_labeledVertex[to], { 1.0, info }, m_graph);
+    boost::add_edge(m_labeledVertex[to], m_labeledVertex[from], { 1.0, info }, m_graph);
 }
 
 void TransformGraph::removeAllEdges(const std::string& from, const std::string& to)
 {
-    boost::remove_edge_by_label(from, to, m_graph);
+    //boost::remove_edge_by_label(from, to, m_graph);
 }
 
 void TransformGraph::removeEdgeByKey(const MeasurementKey& key)
 {
-    while (true)
-    {
-        RemovePredicate pred(key, m_graph.graph());
-        boost::remove_edge_if(pred, m_graph.graph());
-
-        if (!pred.stop)
-            return;
-    }
+    RemovePredicate pred(key, m_graph);
+    boost::remove_edge_if(pred, m_graph);
 }
 
 std::vector<tf2::Transform> TransformGraph::edgeTransforms(const std::string& from, const std::string& to)
@@ -58,12 +59,15 @@ std::vector<tf2::Transform> TransformGraph::edgeTransforms(const std::string& fr
 
 std::vector<std::string> TransformGraph::lookupPath(const std::string& from, const std::string& to)
 {
-    std::vector<Vertex> p(boost::num_edges(m_graph)); // predecessors
-    std::vector<double> d(boost::num_edges(m_graph)); // distances
 
-    auto start = boost::vertex_by_label(from, m_graph);
-    auto goal  = boost::vertex_by_label(to, m_graph);
-    boost::dijkstra_shortest_paths(m_graph.graph(), start, boost::predecessor_map(&p[0]).distance_map(&d[0]));
+    auto d     = boost::get(boost::vertex_distance, m_graph); // distances
+    auto p     = boost::get(boost::vertex_predecessor, m_graph); // predecessors
+    auto names = boost::get(boost::vertex_name, m_graph); // vertex names
+
+    auto start = m_labeledVertex[from];
+    auto goal  = m_labeledVertex[to];
+
+    boost::dijkstra_shortest_paths(m_graph, start, boost::predecessor_map(p).distance_map(d));
 
     // print graph
     VertexIterator vi, vend;
@@ -100,8 +104,8 @@ std::vector<std::string> TransformGraph::lookupPath(const std::string& from, con
         if (sourceVertex == Graph::null_vertex() || targetVertex == Graph::null_vertex())
             continue;
 
-        const auto& sourceName = m_graph.graph()[sourceVertex].name;
-        const auto& targetName = m_graph.graph()[targetVertex].name;
+        const auto& sourceName = names[sourceVertex];
+        const auto& targetName = names[targetVertex];
         std::cout << sourceName << " -> " << targetName << " = " << boost::get(boost::edge_weight, m_graph, *itr) << std::endl;
 
         if (itr == path.rbegin())
@@ -131,4 +135,94 @@ bool TransformGraph::canTransform(const std::string& from, const std::string& to
 std::size_t TransformGraph::numberOfEdges() const
 {
     return boost::num_edges(m_graph);
+}
+
+void TransformGraph::eval()
+{
+    class VertexVisitor : public boost::default_bfs_visitor
+    {
+    public:
+        void discover_vertex(Vertex u, const Graph& graph)
+        {
+            vertices.push(u);
+
+            // dbg
+            const auto& names = boost::get(boost::vertex_name, graph); // vertex names
+            std::cout << "Eval " << names[u] << std::endl;
+        }
+
+        std::stack<Vertex> vertices;
+    };
+
+    auto vertexVisitor = VertexVisitor();
+
+    boost::breadth_first_search(m_graph, m_labeledVertex["world"], boost::visitor(vertexVisitor));
+
+    auto vInfo = boost::get(pose_t(), m_graph); // vertex info
+    auto eInfo = boost::get(info_t(), m_graph); // edge info
+
+    // evaluate the vertices on the stack
+    while (!vertexVisitor.vertices.empty())
+    {
+        auto currentVertex = vertexVisitor.vertices.top();
+        vertexVisitor.vertices.pop();
+
+        auto itrs = boost::in_edges(currentVertex, m_graph);
+
+        for (auto edge : boost::make_iterator_range(itrs.first, itrs.second))
+        {
+            // get the source vertex of that edge
+            auto sourceVertex = edge.m_source;
+
+            // if the source hasn't been evaluated yet, we just skip it
+            // as it is of no value to us
+            if (!vInfo[sourceVertex].evaluated)
+                continue;
+
+            // the source has been evaluated and as such we can use it
+            // for the pose calculation
+            // The edges contain the transformation
+            // The vertices contain the pose
+            auto vertextransform = tf2::Transform{ vInfo[currentVertex].rot, vInfo[currentVertex].pos };
+            auto edgetransform   = eInfo[edge].sensorData.transform;
+
+            auto result = edgetransform * vertextransform;
+
+            vInfo[currentVertex].filter.addVec3(result.getOrigin(), 1.0);
+            vInfo[currentVertex].filter.addQuat(result.getRotation(), 1.0);
+        }
+
+        vInfo[currentVertex].pos = vInfo[currentVertex].filter.weightedMeanVec3();
+        vInfo[currentVertex].rot = vInfo[currentVertex].filter.weightedMeanQuat();
+
+        vInfo[currentVertex].evaluated = true;
+        vInfo[currentVertex].filter.clear();
+    }
+}
+
+void TransformGraph::save(const std::string& filename)
+{
+    std::ofstream file;
+    file.open(filename, std::ofstream::out | std::ofstream::trunc);
+
+    auto vertexInfo = boost::get(pose_t(), m_graph);
+    auto edgeInfo   = boost::get(info_t(), m_graph);
+
+    boost::write_graphviz(file, m_graph, boost::make_label_writer(vertexInfo), boost::make_label_writer(edgeInfo));
+}
+
+////////////////////////////////////////////////////
+// print helpers
+////////////////////////////////////////////////////
+std::ostream& operator<<(std::ostream& os, const EdgeInfo& info)
+{
+    return os << "SE: " << info.sensorData.key.entity << '\n'
+              << "S: " << info.sensorData.key.sensor << '\n'
+              << "M: " << info.sensorData.key.marker;
+}
+
+std::ostream& operator<<(std::ostream& os, const NodeInfo& info)
+{
+    return os << "Name: " << info.name << '\n'
+              << "pos: " << info.pos;
 }

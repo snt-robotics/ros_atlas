@@ -46,6 +46,17 @@ struct SensorData
     {
     }
 
+    /**
+     * @brief SensorData
+     * @param sensorId: The sensor the data is coming from
+     */
+    SensorData(const MeasurementKey& key)
+        : transform({ 0, 0, 0, 1 }, { 0, 0, 0 })
+        , stamp(ros::Time::now())
+        , key(key)
+    {
+    }
+
     SensorData() {}
 
     // pose

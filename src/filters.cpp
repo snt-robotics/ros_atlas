@@ -22,6 +22,12 @@ void WeightedMean::addQuat(const tf2::Quaternion& quat, double weight)
     };
 }
 
+void WeightedMean::clear()
+{
+    m_vectors = Eigen::Vector3d();
+    m_quats   = Eigen::Matrix4Xd();
+}
+
 tf2::Vector3 WeightedMean::weightedMeanVec3() const
 {
     if (m_vectorWeights == 0.0)
@@ -40,8 +46,8 @@ tf2::Quaternion WeightedMean::weightedMeanQuat() const
     Eigen::SelfAdjointEigenSolver<Eigen::Matrix4Xd> solver(m_quats * m_quats.transpose());
 
     // find largest eigenvalue
-    std::size_t index = 0;
-    double maxVal     = -1.0;
+    int index     = 0;
+    double maxVal = -1.0;
 
     for (int i = 0; i < solver.eigenvalues().rows(); ++i)
     {

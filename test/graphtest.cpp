@@ -13,49 +13,64 @@ TEST(Graphs, transformgraph)
     graph.addEntity("C");
     graph.addEntity("D");
     graph.addEntity("E");
-    graph.updateSensorData("A", "B", { { "testEntity1", "testSensor", 0 }, { 0, 0, 0 }, { 0, 0, 0, 1 } });
-    graph.updateSensorData("D", "E", { { "testEntity2", "testSensor", 0 }, { 0, 0, 0 }, { 0, 0, 0, 1 } });
+    graph.updateSensorData("A", "B", { { "A", "testSensor", 0 } });
+    ASSERT_EQ(2, graph.numberOfEdges());
+    graph.updateSensorData("D", "E", { { "D", "testSensor", 0 } });
+    ASSERT_EQ(4, graph.numberOfEdges());
+    graph.updateSensorData("D", "E", { { "D", "testSensor", 1 } });
+    ASSERT_EQ(6, graph.numberOfEdges());
     //graph.updateSensorData("A", "B", SensorData());
     //graph.updateSensorData("D", "E", SensorData());
 
     ASSERT_TRUE(graph.canTransform("A", "B"));
+    ASSERT_TRUE(graph.canTransform("D", "E"));
     ASSERT_FALSE(graph.canTransform("A", "C"));
-    ASSERT_EQ(4, graph.numberOfEdges());
 
-    graph.removeEdgeByKey({ "testEntity1", "testSensor", 0 });
+    graph.removeEdgeByKey({ "A", "testSensor", 0 });
 
     ASSERT_FALSE(graph.canTransform("A", "B"));
-    ASSERT_EQ(2, graph.numberOfEdges());
-
-    //graph.updateSensorData("A", "B", SensorData());
-    //ASSERT_TRUE(graph.canTransform("A", "B"));
-
-    //    graph.updateSensorData("A", "B", { { "testEntity", "testSensor", 0 }, { 10, 0, 0 }, { 0, 0, 0, 1 } });
-    //    graph.updateSensorData("B", "C", { { "testEntity", "testSensor", 0 }, { 0, 10, 0 }, { 0, 0, 0, 1 } });
-
-    auto expected = tf2::Transform{ { 0, 0, 0, 1 }, { 10, 0, 0 } };
-    //ASSERT_EQ(expected, graph.edgeInfo("A", "B").transform);
-
-    // there is a path from A to C
-    //    ASSERT_TRUE(pathEq({ "A", "B", "C" }, graph.lookupPath("A", "C")));
-
-    //    // there is no path from A to E
-    //    ASSERT_TRUE(graph.lookupPath("A", "E").empty());
+    ASSERT_EQ(4, graph.numberOfEdges());
 }
 
-//TEST(Graphs, cycleTest)
-//{
-//    TransformGraph graph;
-//    graph.addVertex("world");
-//    graph.addVertex("A");
-//    graph.addVertex("B");
-//    graph.addVertex("C");
+TEST(Graphs, printTest)
+{
+    TransformGraph graph;
+    graph.addEntity("world");
+    graph.addEntity("A");
+    graph.addEntity("B");
+    graph.addEntity("C");
 
-//    graph.addEdge("world", "A", EdgeInfo());
-//    graph.addEdge("A", "B", EdgeInfo());
-//    graph.addEdge("A", "C", EdgeInfo());
-//    graph.addEdge("B", "C", EdgeInfo());
+    graph.updateSensorData("world", "A", { { "world", "optitrack", -1 } });
+    graph.updateSensorData("A", "world", { { "A", "cam1", 0 } });
+    graph.updateSensorData("A", "world", { { "A", "cam1", 1 } });
 
-//    // there is a path from A to C
-//    ASSERT_TRUE(pathEq({ "world", "A", "C" }, graph.lookupPath("world", "C")));
-//}
+    graph.updateSensorData("A", "B", { { "A", "cam0", 2 } });
+    graph.updateSensorData("B", "C", { { "B", "cam0", 3 } });
+
+    graph.save("/home/paul/graph1.dot");
+
+    // always successful, requires visual inspection
+    ASSERT_TRUE(true);
+}
+
+TEST(Graphs, cycleTest)
+{
+    TransformGraph graph;
+    graph.addEntity("world");
+    graph.addEntity("A");
+    graph.addEntity("B");
+    graph.addEntity("C");
+
+    graph.updateSensorData("world", "A", { { "world", "optitrack", -1 } });
+    graph.updateSensorData("world", "B", { { "world", "optitrack", -2 } });
+
+    graph.updateSensorData("A", "B", { { "A", "cam0", 0 } });
+    graph.updateSensorData("B", "A", { { "B", "cam0", 1 } });
+
+    graph.updateSensorData("A", "C", { { "A", "cam0", 2 } });
+    graph.updateSensorData("B", "C", { { "B", "cam0", 2 } });
+
+    graph.save("/home/paul/graphcycle.dot");
+
+    graph.eval();
+}

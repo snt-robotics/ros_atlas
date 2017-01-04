@@ -13,6 +13,7 @@ public:
 
     void addVec3(const tf2::Vector3& vec, double weight);
     void addQuat(const tf2::Quaternion& quat, double weight);
+    void clear();
 
     tf2::Vector3 weightedMeanVec3() const;
     tf2::Quaternion weightedMeanQuat() const;
@@ -22,4 +23,15 @@ private:
     Eigen::Matrix4Xd m_quats;
 
     double m_vectorWeights = 0.0;
+};
+
+class PassThroughFilter
+{
+public:
+    void addVec3(const tf2::Vector3& vec);
+    void addQuat(const tf2::Quaternion& quat);
+
+private:
+    Eigen::Vector3d m_vectors;
+    Eigen::Matrix4Xd m_quats;
 };
