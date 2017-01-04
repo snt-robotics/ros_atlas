@@ -5,36 +5,56 @@
 #include <ros/ros.h>
 #include <tf2/LinearMath/Transform.h>
 
-struct SensorId
+struct MeasurementKey
 {
-    SensorId(const std::string& entity, const std::string& sensor)
+    MeasurementKey(const std::string& entity, const std::string& sensor, int marker)
         : entity(entity)
         , sensor(sensor)
+        , marker(marker)
     {
     }
 
-    SensorId() {}
+    MeasurementKey() {}
 
     std::string entity;
     std::string sensor;
+    int marker = -1;
+
+    bool operator<(const MeasurementKey& other) const
+    {
+        return std::tie(entity, sensor, marker) < std::tie(other.entity, other.sensor, other.marker);
+    }
+
+    bool operator==(const MeasurementKey& other) const
+    {
+        return std::tie(entity, sensor, marker) == std::tie(other.entity, other.sensor, other.marker);
+    }
 };
 
 struct SensorData
 {
-    SensorData(const SensorId& sensorId, const tf2::Transform& transform)
-        : transf(transform)
+    /**
+     * @brief SensorData
+     * @param sensorId: The sensor the data is coming from
+     * @param pos: The position of the entity
+     * @param rot: The rotation of the entity
+     */
+    SensorData(const MeasurementKey& key, const tf2::Vector3& pos, const tf2::Quaternion& rot)
+        : transform(rot, pos)
         , stamp(ros::Time::now())
-        , id(sensorId)
+        , key(key)
     {
     }
 
     SensorData() {}
 
-    tf2::Transform transf;
+    // pose
+    tf2::Transform transform;
+
     double confidence = 0.0;
     ros::Time stamp;
 
-    SensorId id;
+    MeasurementKey key;
 };
 
 using SensorDataList        = std::vector<SensorData>;
@@ -55,13 +75,15 @@ public:
     SensorDataMap rawSensorData() const;
     FilteredSensorDataMap filteredSensorData() const;
 
-    void onSensorDataAvailable(const SensorId& sensorId, const tf2::Transform& transform, const atlas::markerdataConstPtr markerMsg);
+    void onSensorDataAvailable(const MeasurementKey& measurementKey, const tf2::Transform& sensorTransform, const atlas::markerdataConstPtr markerMsg);
 
 protected:
     SensorData calculateWeightedMean(const SensorDataList& data) const;
 
 private:
     ros::NodeHandle node;
+
+    std::map<int, Marker> m_markers;
 
     // sensor data
     SensorDataMap m_rawSensorData;
