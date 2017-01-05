@@ -54,7 +54,13 @@ void TransformGraph::removeAllEdges(const std::string& entity)
 
 void TransformGraph::removeEdgeByKey(const MeasurementKey& key)
 {
-    RemovePredicate pred(key, m_graph);
+    RemovePredicateKey pred(key, m_graph);
+    boost::remove_edge_if(pred, m_graph);
+}
+
+void TransformGraph::removeEdgesOlderThan(ros::Duration duration)
+{
+    RemovePredicateDuration pred(duration, ros::Time::now(), m_graph);
     boost::remove_edge_if(pred, m_graph);
 }
 

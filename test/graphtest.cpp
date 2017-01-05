@@ -2,6 +2,9 @@
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 #include <boost/graph/graph_traits.hpp>
 
+#include <chrono>
+#include <thread>
+
 #include "../src/transformgraph.h"
 #include "helpers.h"
 
@@ -91,5 +94,27 @@ TEST(Graphs, cycleTestEval)
     graph.updateSensorData("B", "C", { { "B", "cam0", 2 }, { 1, -1, 0 } });
 
     graph.eval();
+    graph.save("/home/paul/graphcycleEval.dot");
+}
+
+TEST(Graphs, expire)
+{
+    TransformGraph graph;
+    graph.addEntity("A");
+    graph.updateSensorData("world", "A", { { "world", "optitrack", -1 }, { 1, 1, 0 } });
+
+    ASSERT_TRUE(graph.canTransform("world", "A"));
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(20)); // sleep for 20ms
+    graph.removeEdgesOlderThan(ros::Duration(10.0 / 1000.0)); // older than 10ms
+
+    ASSERT_FALSE(graph.canTransform("world", "A"));
+
+    graph.updateSensorData("world", "A", { { "world", "optitrack", -1 }, { 1, 1, 0 } });
+    std::this_thread::sleep_for(std::chrono::milliseconds(20)); // sleep for 20ms
+    graph.removeEdgesOlderThan(ros::Duration(30.0 / 1000.0)); // older than 30ms
+
+    ASSERT_TRUE(graph.canTransform("world", "A"));
+
     graph.save("/home/paul/graphcycleEval.dot");
 }

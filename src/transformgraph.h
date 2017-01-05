@@ -40,6 +40,10 @@ class TransformGraph
         SensorData sensorData;
     };
 
+    /**
+     * @brief The VertexInfo struct
+     * Contains all the data associated with a given vertex
+     */
     struct VertexInfo
     {
         std::string name;
@@ -59,7 +63,7 @@ class TransformGraph
     friend std::ostream& operator<<(std::ostream& os, const TransformGraph::EdgeInfo& info);
     friend std::ostream& operator<<(std::ostream& os, const TransformGraph::VertexInfo& info);
 
-    // boost graph glue
+    // boost graph property glue
     struct edgeInfo_t
     {
         typedef boost::edge_property_tag kind;
@@ -70,6 +74,7 @@ class TransformGraph
         typedef boost::vertex_property_tag kind;
     };
 
+    // boost graph shortcuts
     using vertex_descriptor = boost::adjacency_list_traits<boost::listS, boost::listS, boost::directedS>::vertex_descriptor;
     using VertexProp        = boost::property<boost::vertex_index_t, int, boost::property<boost::vertex_distance_t, int, boost::property<boost::vertex_predecessor_t, vertex_descriptor, boost::property<vertexInfo_t, VertexInfo> > > >;
     using EdgePropInfo      = boost::property<edgeInfo_t, EdgeInfo>;
@@ -79,9 +84,13 @@ class TransformGraph
     using Edge              = boost::graph_traits<Graph>::edge_descriptor;
     using VertexIterator    = boost::graph_traits<Graph>::vertex_iterator;
 
-    struct RemovePredicate
+    /**
+     * @brief The RemovePredicateKey struct
+     * Used to remove specific edges from the graph by key
+     */
+    struct RemovePredicateKey
     {
-        RemovePredicate(const MeasurementKey& key, const Graph& graph)
+        RemovePredicateKey(const MeasurementKey& key, const Graph& graph)
             : key(key)
             , graph(graph)
         {
@@ -94,6 +103,30 @@ class TransformGraph
         {
             const auto& infoMap = boost::get(edgeInfo_t(), graph);
             return infoMap[edge].sensorData.key == key;
+        }
+    };
+
+    /**
+     * @brief The RemovePredicateDuration struct
+     * Used to remove specific edges from the graph by duration
+     */
+    struct RemovePredicateDuration
+    {
+        RemovePredicateDuration(ros::Duration duration, ros::Time now, const Graph& graph)
+            : duration(duration)
+            , now(now)
+            , graph(graph)
+        {
+        }
+
+        ros::Duration duration;
+        ros::Time now;
+        const Graph& graph;
+
+        bool operator()(const Edge& edge) const
+        {
+            const auto& infoMap = boost::get(edgeInfo_t(), graph);
+            return (now - infoMap[edge].sensorData.stamp) >= duration;
         }
     };
 
@@ -135,6 +168,13 @@ public:
      * @param key: The key of a specific sensor information
      */
     void removeEdgeByKey(const MeasurementKey& key);
+
+    /**
+     * @brief removeEdgesOlderThan breaks edges that are older than a given duration. Use this
+     * to get rid of sensor data which are too old to be useful
+     * @param duration
+     */
+    void removeEdgesOlderThan(ros::Duration duration);
 
     /**
      * @brief lookupPose returns the pose of a given entity. Throws if the lookup is not successful.
