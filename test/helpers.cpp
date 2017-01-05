@@ -6,25 +6,6 @@
 #include <cmath>
 #include <iostream>
 
-namespace tf2
-{
-// Print helpers
-::std::ostream& operator<<(std::ostream& os, const tf2::Vector3& vec)
-{
-    return os << "Vec3 [X:] " << vec.x() << " [Y:] " << vec.y() << "[Z:] " << vec.z();
-}
-
-::std::ostream& operator<<(std::ostream& os, const tf2::Quaternion& quat)
-{
-    return os << "Quad [X:] " << quat.x() << " [Y:] " << quat.y() << "[Z:] " << quat.z() << "[W:] " << quat.w();
-}
-
-::std::ostream& operator<<(std::ostream& os, const tf2::Transform& transform)
-{
-    return os << transform.getOrigin() << " " << transform.getRotation();
-}
-}
-
 ::std::ostream& operator<<(std::ostream& os, const std::vector<std::string> vec)
 {
     for (const auto& str : vec)
@@ -87,10 +68,22 @@ bool pathEq(const std::vector<std::string>& a, const std::vector<std::string>& b
     return test;
 }
 
+bool poseEq(const Pose& a, const Pose& b)
+{
+    bool test = quatEq(a.rot, b.rot) && vec3Eq(a.pos, b.pos);
+
+    if (!test)
+    {
+        std::cout << "[EXPECTED] " << a << " [ACTUAL] " << b << std::endl;
+    }
+
+    return test;
+}
+
 // GTest main
 int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "atlas_test");
+    ros::init(argc, argv, "atlas_test", ros::init_options::NoRosout);
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

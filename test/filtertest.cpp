@@ -13,6 +13,16 @@ TEST(Filters, weightedMeanVec3)
     ASSERT_EQ(expected, result);
 }
 
+TEST(Filters, weightedMeanQuatSimple)
+{
+    WeightedMean filter;
+    filter.addQuat({ 0, 0, 0, 1 }, 0.5);
+    auto result   = filter.weightedMeanQuat();
+    auto expected = tf2::Quaternion{ 0, 0, 0, 1 };
+
+    ASSERT_EQ(expected, result);
+}
+
 TEST(Filters, weightedMeanQuat)
 {
     WeightedMean filter;

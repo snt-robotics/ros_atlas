@@ -48,9 +48,8 @@ class TransformGraph
     {
         std::string name;
 
-        // world pose
-        tf2::Vector3 pos;
-        tf2::Quaternion rot = tf2::Quaternion::getIdentity();
+        // the pose in the world frame
+        Pose pose;
 
         //
         WeightedMean filter;
@@ -164,10 +163,10 @@ public:
     void removeAllEdges(const std::string& entity);
 
     /**
-     * @brief removeEdgeByKey remoes the edges assigned to a specific sensor information
+     * @brief removeEdgesByKey remoes the edges assigned to a specific sensor information
      * @param key: The key of a specific sensor information
      */
-    void removeEdgeByKey(const MeasurementKey& key);
+    void removeEdgesByKey(const MeasurementKey& key);
 
     /**
      * @brief removeEdgesOlderThan breaks edges that are older than a given duration. Use this

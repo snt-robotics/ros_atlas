@@ -38,7 +38,7 @@ void TransformGraph::updateSensorData(const std::string& from, const std::string
 {
 
     // remove edges if they exist
-    removeEdgeByKey(sensorData.key);
+    removeEdgesByKey(sensorData.key);
 
     // edges do not exist, add them
     auto info = EdgeInfo(sensorData);
@@ -52,7 +52,7 @@ void TransformGraph::removeAllEdges(const std::string& entity)
     boost::clear_vertex(m_labeledVertex[entity], m_graph);
 }
 
-void TransformGraph::removeEdgeByKey(const MeasurementKey& key)
+void TransformGraph::removeEdgesByKey(const MeasurementKey& key)
 {
     RemovePredicateKey pred(key, m_graph);
     boost::remove_edge_if(pred, m_graph);
@@ -71,8 +71,10 @@ Pose TransformGraph::lookupPose(const std::string& entityName) const
     auto itr = m_labeledVertex.find(entityName);
     if (itr != m_labeledVertex.end())
     {
-        return Pose{ vertexInfo[itr->second].pos, vertexInfo[itr->second].rot };
+        return vertexInfo[itr->second].pose;
     }
+
+    throw("Cannot do lookup");
 
     return Pose{};
 }
@@ -170,11 +172,8 @@ void TransformGraph::eval()
 
         void discover_vertex(Vertex u, const Graph& graph)
         {
-            // dbg
-            const auto& info = boost::get(vertexInfo_t(), graph); // vertex names
-            std::cout << "Eval " << info[u].name << std::endl;
-
             // don't add the world, as its pose is already known
+            const auto& info = boost::get(vertexInfo_t(), graph); // vertex names
             if (info[u].name != "world")
                 vertices.push_back(u);
         }
@@ -203,6 +202,7 @@ void TransformGraph::eval()
     auto eInfo = boost::get(edgeInfo_t(), m_graph); // edge info
 
     // move the levels information to the vertex properties
+    // for easy access
     for (const auto& currentVertex : vertices)
     {
         vInfo[currentVertex].level = levels[currentVertex];
@@ -213,7 +213,6 @@ void TransformGraph::eval()
     {
         auto itrs = boost::in_edges(currentVertex, m_graph);
 
-        std::cout << "Begin edge eval for: " << vInfo[currentVertex].name << std::endl;
         for (auto edge : boost::make_iterator_range(itrs.first, itrs.second))
         {
             // get the source vertex of that edge
@@ -225,23 +224,21 @@ void TransformGraph::eval()
             if (!vInfo[sourceVertex].evaluated || vInfo[currentVertex].level == vInfo[sourceVertex].level)
                 continue;
 
-            std::cout << "Eval from source:  " << vInfo[sourceVertex].name << std::endl;
             // the source has been evaluated and as such we can use it
             // for the pose calculation
             // The edges contain the transformation
             // The vertices contain the pose
-            auto vertextransform = tf2::Transform{ vInfo[sourceVertex].rot, vInfo[sourceVertex].pos };
+            auto vertextransform = tf2::Transform{ vInfo[sourceVertex].pose.rot, vInfo[sourceVertex].pose.pos };
             auto edgetransform   = eInfo[edge].sensorData.transform;
 
             auto result = edgetransform * vertextransform;
 
             vInfo[currentVertex].filter.addVec3(result.getOrigin(), 1.0);
-            //vInfo[currentVertex].filter.addQuat(result.getRotation(), 1.0);
+            vInfo[currentVertex].filter.addQuat(result.getRotation(), 1.0);
         }
-        std::cout << "End edge eval" << std::endl;
 
-        vInfo[currentVertex].pos = vInfo[currentVertex].filter.weightedMeanVec3();
-        vInfo[currentVertex].rot = vInfo[currentVertex].filter.weightedMeanQuat();
+        vInfo[currentVertex].pose.pos = vInfo[currentVertex].filter.weightedMeanVec3();
+        vInfo[currentVertex].pose.rot = vInfo[currentVertex].filter.weightedMeanQuat();
 
         vInfo[currentVertex].evaluated = true;
         vInfo[currentVertex].filter.clear();
@@ -273,6 +270,7 @@ std::ostream& operator<<(std::ostream& os, const TransformGraph::EdgeInfo& info)
 std::ostream& operator<<(std::ostream& os, const TransformGraph::VertexInfo& info)
 {
     return os << "Name: " << info.name << '\n'
-              << "pos: " << info.pos.x() << "/" << info.pos.y() << "/" << info.pos.z() << '\n'
+              << "pos: " << info.pose.pos.x() << "/" << info.pose.pos.y() << "/" << info.pose.pos.z() << '\n'
+              << "quat: " << info.pose.rot.x() << "/" << info.pose.rot.y() << "/" << info.pose.rot.z() << "/" << info.pose.rot.w() << '\n'
               << "lvl: " << info.level;
 }

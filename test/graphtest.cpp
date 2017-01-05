@@ -29,7 +29,7 @@ TEST(Graphs, transformgraph)
     ASSERT_TRUE(graph.canTransform("D", "E"));
     ASSERT_FALSE(graph.canTransform("A", "C"));
 
-    graph.removeEdgeByKey({ "A", "testSensor", 0 });
+    graph.removeEdgesByKey({ "A", "testSensor", 0 });
 
     ASSERT_FALSE(graph.canTransform("A", "B"));
     ASSERT_EQ(4, graph.numberOfEdges());
@@ -49,7 +49,7 @@ TEST(Graphs, printTest)
     graph.updateSensorData("A", "B", { { "A", "cam0", 2 } });
     graph.updateSensorData("B", "C", { { "B", "cam0", 3 } });
 
-    graph.save("/home/paul/graph1.dot");
+    graph.save("atlas/Testing/graph1.dot");
 
     // always successful, requires visual inspection
     ASSERT_TRUE(true);
@@ -71,7 +71,7 @@ TEST(Graphs, cycleTest)
     graph.updateSensorData("A", "C", { { "A", "cam0", 2 } });
     graph.updateSensorData("B", "C", { { "B", "cam0", 2 } });
 
-    graph.save("/home/paul/graphcycle.dot");
+    graph.save("atlas/Testing/graphcycle.dot");
 
     graph.eval();
 }
@@ -94,7 +94,11 @@ TEST(Graphs, cycleTestEval)
     graph.updateSensorData("B", "C", { { "B", "cam0", 2 }, { 1, -1, 0 } });
 
     graph.eval();
-    graph.save("/home/paul/graphcycleEval.dot");
+    graph.save("atlas/Testing/graphcycleEval.dot");
+
+    // check the pose of C
+    auto poseC = graph.lookupPose("C");
+    ASSERT_TRUE(poseEq({ { 2, 0, 0 }, { 0, 0, 0, 1 } }, poseC));
 }
 
 TEST(Graphs, expire)
@@ -115,6 +119,4 @@ TEST(Graphs, expire)
     graph.removeEdgesOlderThan(ros::Duration(30.0 / 1000.0)); // older than 30ms
 
     ASSERT_TRUE(graph.canTransform("world", "A"));
-
-    graph.save("/home/paul/graphcycleEval.dot");
 }
