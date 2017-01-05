@@ -1,0 +1,28 @@
+entities:
+  - entity:
+    name: 'ardrone1'
+    sensors:
+      - sensor:
+        name: 'fontcam'
+        topic: 'aruco/ardrone1/etc'
+        transform:
+          origin: [1, 0, 0]
+          rot: [0, 0, 0, 1]
+
+  - entity:
+    name: 'ardrone2'
+
+markers:
+  - marker:
+    id: 1
+    ref: 'world'
+    transform:
+      origin: [1, 0, 0]
+      rot: [0, 0, 0, 1]
+
+  - marker:
+    id: 4
+    ref: 'ardrone1'
+    transform:
+      origin: [1, 0, 0]
+      rot: [0, 0, 0, 1]
