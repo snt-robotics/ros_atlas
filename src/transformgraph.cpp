@@ -5,6 +5,12 @@
 
 TransformGraph::TransformGraph()
 {
+    // world is a special entity
+    addEntity("world");
+
+    auto vertexInfo = boost::get(vertexInfo_t(), m_graph);
+
+    vertexInfo[m_labeledVertex["world"]].evaluated = true;
 }
 
 void TransformGraph::addEntity(const std::string& name)
@@ -16,7 +22,10 @@ void TransformGraph::addEntity(const std::string& name)
     auto names            = boost::get(boost::vertex_name, m_graph);
     auto vertexIndices    = boost::get(boost::vertex_index, m_graph);
     names[vertex]         = name;
-    vertexIndices[vertex] = m_vCount++;
+    vertexIndices[vertex] = m_count++;
+
+    auto vertexInfo         = boost::get(vertexInfo_t(), m_graph);
+    vertexInfo[vertex].name = name;
 }
 
 void TransformGraph::updateSensorData(const std::string& from, const std::string& to, const SensorData& sensorData)
@@ -142,33 +151,57 @@ void TransformGraph::eval()
     class VertexVisitor : public boost::default_bfs_visitor
     {
     public:
+        VertexVisitor(std::vector<Vertex>& vertices, std::map<Vertex, int>& levels)
+            : vertices(vertices)
+            , levels(levels)
+        {
+        }
+
         void discover_vertex(Vertex u, const Graph& graph)
         {
-            vertices.push(u);
-
             // dbg
             const auto& names = boost::get(boost::vertex_name, graph); // vertex names
             std::cout << "Eval " << names[u] << std::endl;
+
+            if (names[u] != "world")
+                vertices.push_back(u);
         }
 
-        std::stack<Vertex> vertices;
+        void tree_edge(Edge e, const Graph& graph)
+        {
+            auto source = e.m_source;
+            auto target = e.m_target;
+
+            levels[target] = levels[source] + 1;
+        }
+
+    private:
+        std::vector<Vertex>& vertices;
+        std::map<Vertex, int>& levels;
     };
 
-    auto vertexVisitor = VertexVisitor();
+    std::vector<Vertex> vertices;
+    std::map<Vertex, int> levels;
+    auto vertexVisitor = VertexVisitor(vertices, levels);
 
+    // evaluate vertices on the "same level" first
     boost::breadth_first_search(m_graph, m_labeledVertex["world"], boost::visitor(vertexVisitor));
 
-    auto vInfo = boost::get(pose_t(), m_graph); // vertex info
-    auto eInfo = boost::get(info_t(), m_graph); // edge info
+    auto vInfo = boost::get(vertexInfo_t(), m_graph); // vertex info
+    auto eInfo = boost::get(edgeInfo_t(), m_graph); // edge info
+
+    // move the levels information to the vertex properties
+    for (const auto& currentVertex : vertices)
+    {
+        vInfo[currentVertex].level = levels[currentVertex];
+    }
 
     // evaluate the vertices on the stack
-    while (!vertexVisitor.vertices.empty())
+    for (const auto& currentVertex : vertices)
     {
-        auto currentVertex = vertexVisitor.vertices.top();
-        vertexVisitor.vertices.pop();
-
         auto itrs = boost::in_edges(currentVertex, m_graph);
 
+        std::cout << "Begin edge eval for: " << vInfo[currentVertex].name << std::endl;
         for (auto edge : boost::make_iterator_range(itrs.first, itrs.second))
         {
             // get the source vertex of that edge
@@ -176,21 +209,24 @@ void TransformGraph::eval()
 
             // if the source hasn't been evaluated yet, we just skip it
             // as it is of no value to us
-            if (!vInfo[sourceVertex].evaluated)
+            // The same applies to vertices that have the same distance to the world
+            if (!vInfo[sourceVertex].evaluated || vInfo[currentVertex].level == vInfo[sourceVertex].level)
                 continue;
 
+            std::cout << "Eval from source:  " << vInfo[sourceVertex].name << std::endl;
             // the source has been evaluated and as such we can use it
             // for the pose calculation
             // The edges contain the transformation
             // The vertices contain the pose
-            auto vertextransform = tf2::Transform{ vInfo[currentVertex].rot, vInfo[currentVertex].pos };
+            auto vertextransform = tf2::Transform{ vInfo[sourceVertex].rot, vInfo[sourceVertex].pos };
             auto edgetransform   = eInfo[edge].sensorData.transform;
 
             auto result = edgetransform * vertextransform;
 
             vInfo[currentVertex].filter.addVec3(result.getOrigin(), 1.0);
-            vInfo[currentVertex].filter.addQuat(result.getRotation(), 1.0);
+            //vInfo[currentVertex].filter.addQuat(result.getRotation(), 1.0);
         }
+        std::cout << "End edge eval" << std::endl;
 
         vInfo[currentVertex].pos = vInfo[currentVertex].filter.weightedMeanVec3();
         vInfo[currentVertex].rot = vInfo[currentVertex].filter.weightedMeanQuat();
@@ -205,8 +241,8 @@ void TransformGraph::save(const std::string& filename)
     std::ofstream file;
     file.open(filename, std::ofstream::out | std::ofstream::trunc);
 
-    auto vertexInfo = boost::get(pose_t(), m_graph);
-    auto edgeInfo   = boost::get(info_t(), m_graph);
+    auto vertexInfo = boost::get(vertexInfo_t(), m_graph);
+    auto edgeInfo   = boost::get(edgeInfo_t(), m_graph);
 
     boost::write_graphviz(file, m_graph, boost::make_label_writer(vertexInfo), boost::make_label_writer(edgeInfo));
 }
@@ -221,8 +257,9 @@ std::ostream& operator<<(std::ostream& os, const EdgeInfo& info)
               << "M: " << info.sensorData.key.marker;
 }
 
-std::ostream& operator<<(std::ostream& os, const NodeInfo& info)
+std::ostream& operator<<(std::ostream& os, const VertexInfo& info)
 {
     return os << "Name: " << info.name << '\n'
-              << "pos: " << info.pos;
+              << "pos: " << info.pos.x() << "/" << info.pos.y() << "/" << info.pos.z() << '\n'
+              << "lvl: " << info.level;
 }

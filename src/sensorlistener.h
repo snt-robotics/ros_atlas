@@ -49,9 +49,21 @@ struct SensorData
     /**
      * @brief SensorData
      * @param sensorId: The sensor the data is coming from
+     * @param pos: The position of the entity
+     */
+    SensorData(const MeasurementKey& key, const tf2::Vector3& pos)
+        : transform(tf2::Quaternion::getIdentity(), pos)
+        , stamp(ros::Time::now())
+        , key(key)
+    {
+    }
+
+    /**
+     * @brief SensorData
+     * @param sensorId: The sensor the data is coming from
      */
     SensorData(const MeasurementKey& key)
-        : transform({ 0, 0, 0, 1 }, { 0, 0, 0 })
+        : transform(tf2::Quaternion::getIdentity(), { 0, 0, 0 })
         , stamp(ros::Time::now())
         , key(key)
     {

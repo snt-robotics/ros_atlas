@@ -35,7 +35,6 @@ TEST(Graphs, transformgraph)
 TEST(Graphs, printTest)
 {
     TransformGraph graph;
-    graph.addEntity("world");
     graph.addEntity("A");
     graph.addEntity("B");
     graph.addEntity("C");
@@ -56,7 +55,6 @@ TEST(Graphs, printTest)
 TEST(Graphs, cycleTest)
 {
     TransformGraph graph;
-    graph.addEntity("world");
     graph.addEntity("A");
     graph.addEntity("B");
     graph.addEntity("C");
@@ -73,4 +71,25 @@ TEST(Graphs, cycleTest)
     graph.save("/home/paul/graphcycle.dot");
 
     graph.eval();
+}
+
+TEST(Graphs, cycleTestEval)
+{
+    TransformGraph graph;
+    graph.addEntity("A");
+    graph.addEntity("B");
+    graph.addEntity("C");
+
+    graph.updateSensorData("world", "A", { { "world", "optitrack", -1 }, { 1, 1, 0 } });
+    graph.updateSensorData("world", "B", { { "world", "optitrack", -2 }, { 1, -1, 0 } });
+
+    // these should have no effect as they are edges on the same level (i.e. same distance to the world)
+    graph.updateSensorData("A", "B", { { "A", "cam0", 0 }, { 0, -100, 0 } });
+    graph.updateSensorData("B", "A", { { "B", "cam0", 1 }, { 0, -100, 0 } });
+
+    graph.updateSensorData("A", "C", { { "A", "cam0", 2 }, { 1, 1, 0 } });
+    graph.updateSensorData("B", "C", { { "B", "cam0", 2 }, { 1, -1, 0 } });
+
+    graph.eval();
+    graph.save("/home/paul/graphcycleEval.dot");
 }
