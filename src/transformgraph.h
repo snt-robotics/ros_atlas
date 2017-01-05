@@ -1,6 +1,7 @@
 #pragma once
 
 #include "filters.h"
+#include "helpers.h"
 #include "sensorlistener.h"
 
 #include <boost/graph/adjacency_list.hpp>
@@ -8,50 +9,55 @@
 #include <ros/time.h>
 #include <tf2/LinearMath/Transform.h>
 
-/**
- * @brief The EdgeInfo struct
- * Contains the information needed to travel from A to B
- * In other words: It contains (one or multiple) sensor data
- * of a specific entity
- */
-struct EdgeInfo
-{
-    EdgeInfo(const SensorData& sensorData)
-        : sensorData(sensorData)
-    {
-    }
-
-    EdgeInfo inverse() const
-    {
-        auto copy = *this;
-
-        copy.sensorData.transform = copy.sensorData.transform.inverse();
-
-        return copy;
-    }
-
-    EdgeInfo() {}
-    SensorData sensorData;
-};
-
-std::ostream& operator<<(std::ostream& os, const EdgeInfo& info);
-
-struct VertexInfo
-{
-    std::string name;
-
-    // world pose
-    tf2::Vector3 pos;
-    tf2::Quaternion rot = tf2::Quaternion::getIdentity();
-
-    //
-    WeightedMean filter;
-    bool evaluated = false;
-    int level      = 0;
-};
-
 class TransformGraph
 {
+    /**
+   * @brief The EdgeInfo struct
+   * Contains the information needed to travel from A to B
+   * In other words: It contains (one or multiple) sensor data
+   * of a specific entity
+   */
+    struct EdgeInfo
+    {
+        EdgeInfo(const SensorData& sensorData)
+            : sensorData(sensorData)
+        {
+        }
+
+        EdgeInfo() {}
+
+        friend std::ostream& operator<<(std::ostream& os, const EdgeInfo& info);
+
+        EdgeInfo inverse() const
+        {
+            auto copy = *this;
+
+            copy.sensorData.transform = copy.sensorData.transform.inverse();
+
+            return copy;
+        }
+
+        SensorData sensorData;
+    };
+
+    struct VertexInfo
+    {
+        std::string name;
+
+        // world pose
+        tf2::Vector3 pos;
+        tf2::Quaternion rot = tf2::Quaternion::getIdentity();
+
+        //
+        WeightedMean filter;
+        bool evaluated = false;
+        int level      = 0;
+
+        friend std::ostream& operator<<(std::ostream& os, const VertexInfo& info);
+    };
+
+    friend std::ostream& operator<<(std::ostream& os, const TransformGraph::EdgeInfo& info);
+    friend std::ostream& operator<<(std::ostream& os, const TransformGraph::VertexInfo& info);
 
     // boost graph glue
     struct edgeInfo_t
@@ -104,13 +110,25 @@ public:
     void addEntity(const std::string& name);
 
     /**
+     * @brief hasEntity
+     * @param name
+     * @return Returns true if the entity exists
+     */
+    bool hasEntity(const std::string& name) const;
+
+    /**
      * @brief updateSensorData
      * @param from: The entity name the sensor information in coming from
      * @param to: The entity name the sensor information targets
      * @param sensorData: The sensor information itself
      */
     void updateSensorData(const std::string& from, const std::string& to, const SensorData& sensorData);
-    void removeAllEdges(const std::string& from, const std::string& to);
+
+    /**
+     * @brief removeAllEdges removes all sensor data assigned to a given entity
+     * @param entity
+     */
+    void removeAllEdges(const std::string& entity);
 
     /**
      * @brief removeEdgeByKey remoes the edges assigned to a specific sensor information
@@ -118,7 +136,13 @@ public:
      */
     void removeEdgeByKey(const MeasurementKey& key);
 
-    std::vector<tf2::Transform> edgeTransforms(const std::string& from, const std::string& to);
+    /**
+     * @brief lookupPose returns the pose of a given entity. Throws if the lookup is not successful.
+     * @param entity
+     * @return The pose of the given entity
+     */
+    Pose lookupPose(const std::string& entityName) const;
+
     std::vector<std::string> lookupPath(const std::string& from, const std::string& to);
     tf2::Transform lookupTransform(const std::string& from, const std::string& to);
 

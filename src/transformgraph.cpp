@@ -28,6 +28,12 @@ void TransformGraph::addEntity(const std::string& name)
     vertexInfo[vertex].name = name;
 }
 
+bool TransformGraph::hasEntity(const std::string& name) const
+{
+    auto itr = m_labeledVertex.find(name);
+    return itr != m_labeledVertex.end();
+}
+
 void TransformGraph::updateSensorData(const std::string& from, const std::string& to, const SensorData& sensorData)
 {
 
@@ -41,9 +47,9 @@ void TransformGraph::updateSensorData(const std::string& from, const std::string
     boost::add_edge(m_labeledVertex[to], m_labeledVertex[from], { 1.0, info }, m_graph);
 }
 
-void TransformGraph::removeAllEdges(const std::string& from, const std::string& to)
+void TransformGraph::removeAllEdges(const std::string& entity)
 {
-    //boost::remove_edge_by_label(from, to, m_graph);
+    boost::clear_vertex(m_labeledVertex[entity], m_graph);
 }
 
 void TransformGraph::removeEdgeByKey(const MeasurementKey& key)
@@ -52,18 +58,17 @@ void TransformGraph::removeEdgeByKey(const MeasurementKey& key)
     boost::remove_edge_if(pred, m_graph);
 }
 
-std::vector<tf2::Transform> TransformGraph::edgeTransforms(const std::string& from, const std::string& to)
+Pose TransformGraph::lookupPose(const std::string& entityName) const
 {
-    //    assert(hasEdge(from, to));
-    //    auto info = edgeInfo(from, to);
+    const auto vertexInfo = boost::get(vertexInfo_t(), m_graph);
 
-    //    std::vector<tf2::Transform> transforms;
-    //    for (const auto& keyval : info.sensorDataMap)
-    //    {
-    //        transforms.push_back(keyval.second.transform);
-    //    }
+    auto itr = m_labeledVertex.find(entityName);
+    if (itr != m_labeledVertex.end())
+    {
+        return Pose{ vertexInfo[itr->second].pos, vertexInfo[itr->second].rot };
+    }
 
-    //return transforms;
+    return Pose{};
 }
 
 std::vector<std::string> TransformGraph::lookupPath(const std::string& from, const std::string& to)
@@ -168,7 +173,7 @@ void TransformGraph::eval()
                 vertices.push_back(u);
         }
 
-        void tree_edge(Edge e, const Graph& graph)
+        void tree_edge(Edge e, const Graph&)
         {
             auto source = e.m_source;
             auto target = e.m_target;
@@ -251,14 +256,15 @@ void TransformGraph::save(const std::string& filename)
 ////////////////////////////////////////////////////
 // print helpers
 ////////////////////////////////////////////////////
-std::ostream& operator<<(std::ostream& os, const EdgeInfo& info)
+
+std::ostream& operator<<(std::ostream& os, const TransformGraph::EdgeInfo& info)
 {
     return os << "SE: " << info.sensorData.key.entity << '\n'
               << "S: " << info.sensorData.key.sensor << '\n'
               << "M: " << info.sensorData.key.marker;
 }
 
-std::ostream& operator<<(std::ostream& os, const VertexInfo& info)
+std::ostream& operator<<(std::ostream& os, const TransformGraph::VertexInfo& info)
 {
     return os << "Name: " << info.name << '\n'
               << "pos: " << info.pos.x() << "/" << info.pos.y() << "/" << info.pos.z() << '\n'
