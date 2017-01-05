@@ -65,7 +65,7 @@ class TransformGraph
     };
 
     using vertex_descriptor = boost::adjacency_list_traits<boost::listS, boost::listS, boost::directedS>::vertex_descriptor;
-    using VertexProp        = boost::property<boost::vertex_index_t, int, boost::property<boost::vertex_name_t, std::string, boost::property<boost::vertex_distance_t, int, boost::property<boost::vertex_predecessor_t, vertex_descriptor, boost::property<vertexInfo_t, VertexInfo> > > > >;
+    using VertexProp        = boost::property<boost::vertex_index_t, int, boost::property<boost::vertex_distance_t, int, boost::property<boost::vertex_predecessor_t, vertex_descriptor, boost::property<vertexInfo_t, VertexInfo> > > >;
     using EdgePropInfo      = boost::property<edgeInfo_t, EdgeInfo>;
     using EdgeProp          = boost::property<boost::edge_weight_t, double, EdgePropInfo>;
     using Graph             = boost::adjacency_list<boost::multisetS, boost::listS, boost::bidirectionalS, VertexProp, EdgeProp, boost::multisetS>;

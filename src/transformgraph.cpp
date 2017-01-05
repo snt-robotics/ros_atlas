@@ -7,9 +7,9 @@ TransformGraph::TransformGraph()
 {
     // world is a special entity
     addEntity("world");
-
     auto vertexInfo = boost::get(vertexInfo_t(), m_graph);
 
+    // world is by definition always evaluated
     vertexInfo[m_labeledVertex["world"]].evaluated = true;
 }
 
@@ -19,11 +19,11 @@ void TransformGraph::addEntity(const std::string& name)
     auto vertex           = boost::add_vertex(m_graph);
     m_labeledVertex[name] = vertex;
 
-    auto names            = boost::get(boost::vertex_name, m_graph);
-    auto vertexIndices    = boost::get(boost::vertex_index, m_graph);
-    names[vertex]         = name;
-    vertexIndices[vertex] = m_count++;
+    // set the index of the new vertex
+    auto indices    = boost::get(boost::vertex_index, m_graph);
+    indices[vertex] = m_count++;
 
+    // set the name of the new vertex
     auto vertexInfo         = boost::get(vertexInfo_t(), m_graph);
     vertexInfo[vertex].name = name;
 }
@@ -69,9 +69,9 @@ std::vector<tf2::Transform> TransformGraph::edgeTransforms(const std::string& fr
 std::vector<std::string> TransformGraph::lookupPath(const std::string& from, const std::string& to)
 {
 
-    auto d     = boost::get(boost::vertex_distance, m_graph); // distances
-    auto p     = boost::get(boost::vertex_predecessor, m_graph); // predecessors
-    auto names = boost::get(boost::vertex_name, m_graph); // vertex names
+    auto d    = boost::get(boost::vertex_distance, m_graph); // distances
+    auto p    = boost::get(boost::vertex_predecessor, m_graph); // predecessors
+    auto info = boost::get(vertexInfo_t(), m_graph); // vertex info
 
     auto start = m_labeledVertex[from];
     auto goal  = m_labeledVertex[to];
@@ -113,8 +113,8 @@ std::vector<std::string> TransformGraph::lookupPath(const std::string& from, con
         if (sourceVertex == Graph::null_vertex() || targetVertex == Graph::null_vertex())
             continue;
 
-        const auto& sourceName = names[sourceVertex];
-        const auto& targetName = names[targetVertex];
+        const auto& sourceName = info[sourceVertex].name;
+        const auto& targetName = info[targetVertex].name;
         std::cout << sourceName << " -> " << targetName << " = " << boost::get(boost::edge_weight, m_graph, *itr) << std::endl;
 
         if (itr == path.rbegin())
@@ -160,10 +160,11 @@ void TransformGraph::eval()
         void discover_vertex(Vertex u, const Graph& graph)
         {
             // dbg
-            const auto& names = boost::get(boost::vertex_name, graph); // vertex names
-            std::cout << "Eval " << names[u] << std::endl;
+            const auto& info = boost::get(vertexInfo_t(), graph); // vertex names
+            std::cout << "Eval " << info[u].name << std::endl;
 
-            if (names[u] != "world")
+            // don't add the world, as its pose is already known
+            if (info[u].name != "world")
                 vertices.push_back(u);
         }
 
