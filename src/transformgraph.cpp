@@ -34,6 +34,16 @@ bool TransformGraph::hasEntity(const std::string& name) const
     return itr != m_labeledVertex.end();
 }
 
+std::vector<std::string> TransformGraph::entities() const
+{
+    std::vector<std::string> out;
+
+    for (const auto& keyval : m_labeledVertex)
+        out.push_back(keyval.first);
+
+    return out;
+}
+
 void TransformGraph::updateSensorData(const std::string& from, const std::string& to, const SensorData& sensorData)
 {
 

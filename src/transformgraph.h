@@ -149,6 +149,12 @@ public:
     bool hasEntity(const std::string& name) const;
 
     /**
+     * @brief entities returns a list containing all the entities in the graph
+     * @return Returns a list of entity names
+     */
+    std::vector<std::string> entities() const;
+
+    /**
      * @brief updateSensorData
      * @param from: The entity name the sensor information in coming from
      * @param to: The entity name the sensor information targets

@@ -142,6 +142,7 @@ SET(SRC_FILES
    src/world.cpp
    src/transformgraph.cpp
    src/helpers.cpp
+   src/kalmanfilter.cpp
 )
 
 SET(EXT_LIBS
@@ -206,6 +207,7 @@ catkin_add_gtest(${PROJECT_NAME}-test
     test/sensortest.cpp
     test/configtest.cpp
     test/graphtest.cpp
+    test/kalman.cpp
     test/helpers.cpp
 
     ${SRC_FILES}

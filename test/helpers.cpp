@@ -4,6 +4,7 @@
 #include <ros/ros.h>
 
 #include <cmath>
+#include <eigen3/Eigen/Core>
 #include <iostream>
 
 ::std::ostream& operator<<(std::ostream& os, const std::vector<std::string> vec)
@@ -86,4 +87,26 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "atlas_test", ros::init_options::NoRosout);
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
+}
+
+bool vecEq(const Eigen::VectorXd& a, const Eigen::VectorXd& b)
+{
+    if (a.rows() != b.rows() || a.cols() != b.cols())
+    {
+        std::cout << "[EXPECTED] and [ACTUAL] size don't match" << std::endl;
+        return false;
+    }
+
+    auto ref = Eigen::VectorXd(a);
+    ref.setOnes();
+    ref *= 0.0001;
+    bool test = (a - b).isMuchSmallerThan(ref);
+
+    if (!test)
+    {
+        Eigen::IOFormat cleanfmt(4, 0, ", ", "", "[", "]");
+        std::cout << "[EXPECTED] " << a.format(cleanfmt) << "\n[ACTUAL] " << b.format(cleanfmt) << std::endl;
+    }
+
+    return test;
 }
