@@ -86,7 +86,7 @@ struct Measurement
     // the time this data was recorded
     ros::Time stamp;
 
-    // a unique identifier for this data
+    // a unique identifier for this measurement
     Key key;
 };
 
@@ -103,10 +103,31 @@ class SensorListener
 {
 public:
     SensorListener();
+
+    /**
+     * @brief SensorListener
+     * @param config: Used to configure the sensor listener
+     */
     SensorListener(const Config& config);
 
+    /**
+     * @brief filteredSensorData
+     * @return A weighted average of all sensor measurements
+     */
     SensorDataList filteredSensorData() const;
 
+    /**
+     * @brief clear clears all recorded sensor data
+     */
+    void clear();
+
+    /**
+     * @brief onSensorDataAvailable is the callback used by ROS in case new data is available
+     * @param from: Where the data origins from
+     * @param sensor: The name of the sensor
+     * @param sensorTransform: The transformation from the sensor to the baselink of "from"
+     * @param markerMsg: The marker message
+     */
     void onSensorDataAvailable(const std::string& from, const std::string& sensor, const tf2::Transform& sensorTransform, const atlas::markerdataConstPtr markerMsg);
 
 protected:
@@ -115,9 +136,9 @@ protected:
 private:
     ros::NodeHandle node;
 
+    // used to map from the marker id to the target entity
     std::map<int, Marker> m_markers;
 
     // sensor data
     SensorDataMap m_rawSensorData;
-    //std::map<SensorDataKey, SensorData> m_filteredSensorData;
 };

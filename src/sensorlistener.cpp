@@ -106,3 +106,8 @@ SensorDataList SensorListener::filteredSensorData() const
 
     return filteredSensorData;
 }
+
+void SensorListener::clear()
+{
+    m_rawSensorData.clear();
+}

@@ -1,42 +1,25 @@
-#include <angles/angles.h>
-#include <boost/function.hpp>
-#include <geometry_msgs/PoseStamped.h>
-#include <nav_msgs/Odometry.h>
 #include <ros/ros.h>
-#include <std_msgs/String.h>
-#include <tf/LinearMath/Quaternion.h>
-#include <tf/transform_broadcaster.h>
-#include <tf/transform_datatypes.h>
-#include <tf/transform_listener.h>
-
-#include <aruco_all_codes_tracker/DetectedMarker.h>
-#include <aruco_all_codes_tracker/DetectedMarkerArray.h>
-
-#include <fstream>
-#include <iostream>
-#include <regex>
-#include <sstream>
-
-#include "csvlogger.h"
-#include "markertracker.h"
-#include "rvizhelpers.h"
 
 #include "config.h"
 #include "sensorlistener.h"
 #include "transformgraph.h"
 #include "transformgraphbroadcaster.h"
 
-using MarkerArrayCallback = void(aruco_all_codes_tracker::DetectedMarkerArrayConstPtr);
-
 int main(int argc, char** argv)
 {
+    const std::vector<std::string> args(argv + 1, argv + argc);
+
+    // make sure we have a config file
+    assert(args.size() > 1);
+
     // init ros
     ros::init(argc, argv, "atlas");
-    ros::NodeHandle n;
 
-    Config config("");
+    // init atlas
+    Config config(args[1]);
     SensorListener sensorListener(config);
     TransformGraph graph;
+    TransformGraphBroadcaster broadcaster;
 
     //////////////////////////////////////
     ///      Main Loop
@@ -44,5 +27,10 @@ int main(int argc, char** argv)
     ros::Rate loopRate(60);
     while (ros::ok())
     {
+        graph.update(sensorListener, ros::Duration(100.0 / 1000.0));
+        broadcaster.broadcast(graph);
+        sensorListener.clear();
+
+        loopRate.sleep();
     }
 }

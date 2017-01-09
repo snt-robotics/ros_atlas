@@ -163,7 +163,7 @@ public:
     void updateSensorData(const Measurement& measurement);
 
     /**
-     * @brief update updates from a sensor listener and removes expired edges
+     * @brief update updates from a sensor listener and removes expired edges, also evaluates the graph
      * @param listener: Used to update the graph
      * @param duration: Edges older than duration are removed
      */

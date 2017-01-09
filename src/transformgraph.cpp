@@ -44,17 +44,28 @@ std::vector<std::string> TransformGraph::entities() const
     return out;
 }
 
-void TransformGraph::updateSensorData(const std::string& from, const std::string& to, const SensorData& sensorData)
+void TransformGraph::updateSensorData(const Measurement& measurement)
 {
 
     // remove edges if they exist
-    removeEdgesByKey(sensorData.key);
+    removeEdgesByKey(measurement.key);
 
     // edges do not exist, add them
-    auto info = EdgeInfo(sensorData);
+    auto info = EdgeInfo(measurement);
 
-    boost::add_edge(m_labeledVertex[from], m_labeledVertex[to], { 1.0, info }, m_graph);
-    boost::add_edge(m_labeledVertex[to], m_labeledVertex[from], { 1.0, info }, m_graph);
+    boost::add_edge(m_labeledVertex[measurement.key.from], m_labeledVertex[measurement.key.to], { 1.0, info }, m_graph);
+    boost::add_edge(m_labeledVertex[measurement.key.to], m_labeledVertex[measurement.key.from], { 1.0, info }, m_graph);
+}
+
+void TransformGraph::update(const SensorListener& listener, ros::Duration duration)
+{
+    auto measurements = listener.filteredSensorData();
+
+    for (const auto& measurement : measurements)
+        updateSensorData(measurement);
+
+    removeEdgesOlderThan(duration);
+    eval();
 }
 
 void TransformGraph::removeAllEdges(const std::string& entity)
@@ -62,7 +73,7 @@ void TransformGraph::removeAllEdges(const std::string& entity)
     boost::clear_vertex(m_labeledVertex[entity], m_graph);
 }
 
-void TransformGraph::removeEdgesByKey(const MeasurementKey& key)
+void TransformGraph::removeEdgesByKey(const Measurement::Key& key)
 {
     RemovePredicateKey pred(key, m_graph);
     boost::remove_edge_if(pred, m_graph);
@@ -79,14 +90,12 @@ Pose TransformGraph::lookupPose(const std::string& entityName) const
     const auto vertexInfo = boost::get(vertexInfo_t(), m_graph);
 
     auto itr = m_labeledVertex.find(entityName);
-    if (itr != m_labeledVertex.end())
+    if (itr != m_labeledVertex.end() && vertexInfo[itr->second].evaluated)
     {
         return vertexInfo[itr->second].pose;
     }
 
-    throw("Cannot do lookup");
-
-    return Pose{};
+    throw("\"" + entityName + "\" is not connected to \"world\"");
 }
 
 std::vector<std::string> TransformGraph::lookupPath(const std::string& from, const std::string& to)
@@ -272,9 +281,9 @@ void TransformGraph::save(const std::string& filename)
 
 std::ostream& operator<<(std::ostream& os, const TransformGraph::EdgeInfo& info)
 {
-    return os << "SE: " << info.sensorData.key.entity << '\n'
-              << "S: " << info.sensorData.key.sensor << '\n'
-              << "M: " << info.sensorData.key.marker;
+    return os << "source: " << info.sensorData.key.from << '\n'
+              << "sensor: " << info.sensorData.key.sensor << '\n'
+              << "marker: " << info.sensorData.key.marker;
 }
 
 std::ostream& operator<<(std::ostream& os, const TransformGraph::VertexInfo& info)
