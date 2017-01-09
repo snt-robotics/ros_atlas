@@ -20,7 +20,7 @@ int main(int argc, char** argv)
     Config config(configFile);
     SensorListener sensorListener(config);
     TransformGraph graph;
-    TransformGraphBroadcaster broadcaster;
+    TransformGraphBroadcaster broadcaster(config);
 
     // print the config
     config.dump();
@@ -32,7 +32,7 @@ int main(int argc, char** argv)
     while (ros::ok())
     {
         graph.update(sensorListener, ros::Duration(100.0 / 1000.0));
-        broadcaster.broadcast(graph);
+        broadcaster.broadcast(graph, true, true);
         sensorListener.clear();
 
         loopRate.sleep();

@@ -14,7 +14,7 @@ struct Sensor
 {
     std::string name;
     std::string topic;
-    tf2::Transform transf;
+    tf2::Transform transf = tf2::Transform::getIdentity();
 };
 
 /**
@@ -29,14 +29,15 @@ struct WorldSensor
     enum class Type
     {
         None, ///< unspecified
-        MoCap, ///< motion capture
+        GPS, ///< i.e. non marker based
         Camera ///< Camera & markers
     };
     std::string name;
     std::string entity;
     std::string topic;
-    Type type    = Type::MoCap;
-    double sigma = 1.0;
+    tf2::Transform transf = tf2::Transform::getIdentity(); ///< transform to world frame
+    Type type             = Type::None;
+    double sigma          = 1.0;
 };
 
 /**

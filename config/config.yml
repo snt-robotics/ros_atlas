@@ -30,14 +30,14 @@ markers:
 world:
   - sensor:
     name: 'optitrack0'
-    type: 'MoCap'
+    type: 'GPS'
     topic: '/Ardrone2SimpleLinModel_HASHMARK_0/pose'
     entity: 'ardrone0'
     sigma: 0.5
 
   - sensor:
     name: 'optitrack1'
-    type: 'MoCap'
+    type: 'GPS'
     topic: '/Ardrone2SimpleLinModel_HASHMARK_1/pose'
     entity: 'ardrone1'
     sigma: 0.5

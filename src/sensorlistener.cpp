@@ -36,23 +36,44 @@ SensorListener::SensorListener(const Config& config)
     // setup world sensor listeners
     for (const auto& sensor : config.worldSensors())
     {
-        using SensorCallback = void(geometry_msgs::PoseStampedConstPtr);
+        if (sensor.type == WorldSensor::Type::GPS)
+        {
+            using SensorCallback = void(geometry_msgs::PoseStampedConstPtr);
 
-        // data passed to the callback lambda
-        auto to = sensor.entity;
+            // data passed to the callback lambda
+            auto to = sensor.entity;
 
-        // callback lambda function
-        // provides aditional values to the callback like the name of the reference frame
-        boost::function<SensorCallback> callbackSensor = [this, to](const geometry_msgs::PoseStampedConstPtr data) {
-            atlas::MarkerData fakeData;
-            fakeData.pos = data->pose.position;
-            fakeData.rot = data->pose.orientation;
+            // callback lambda function
+            // provides aditional values to the callback like the name of the reference frame
+            boost::function<SensorCallback> callbackSensor = [this, to](const geometry_msgs::PoseStampedConstPtr data) {
+                atlas::MarkerData fakeData;
+                fakeData.pos = data->pose.position;
+                fakeData.rot = data->pose.orientation;
 
-            onSensorDataAvailable("world", to, tf2::Transform::getIdentity(), fakeData);
-        };
+                onSensorDataAvailable("world", to, tf2::Transform::getIdentity(), fakeData);
+            };
 
-        // tell ros we want to listen to that topic
-        node.subscribe<SensorCallback>(sensor.topic, 1000, callbackSensor);
+            // tell ros we want to listen to that topic
+            node.subscribe<SensorCallback>(sensor.topic, 1000, callbackSensor);
+        }
+        else // marker based callback
+        {
+            using SensorCallback = void(atlas::MarkerDataConstPtr);
+
+            // data passed to the callback lambda
+            auto from       = "world";
+            auto sensorName = sensor.name;
+            auto transform  = sensor.transf;
+
+            // callback lambda function
+            // provides aditional values to the callback like the name of the reference frame
+            boost::function<SensorCallback> callbackSensor = [this, transform, from, sensorName](const atlas::MarkerDataConstPtr markerData) {
+                onSensorDataAvailable(from, sensorName, transform, *markerData);
+            };
+
+            // tell ros we want to listen to that topic
+            node.subscribe<SensorCallback>(sensor.topic, 1000, callbackSensor);
+        }
     }
 
     // setup markers
