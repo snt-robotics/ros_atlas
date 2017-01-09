@@ -94,6 +94,30 @@ std::vector<Marker> Config::markers() const
     return m_markers;
 }
 
+void Config::dump() const
+{
+    std::cout << "Entities:\n";
+    for (const auto& entity : m_entities)
+    {
+        std::cout << "  -" << entity.name << "\n";
+        std::cout << "    Sensors:\n";
+
+        for (const auto& sensor : entity.sensors)
+        {
+            std::cout << "      -" << sensor.name << "\n";
+        }
+    }
+
+    std::cout << "Markers:\n";
+    for (const auto& marker : m_markers)
+    {
+        std::cout << "  -ID: " << marker.id << "\n";
+        std::cout << "    Ref. frame: " << marker.ref << "\n";
+    }
+
+    std::cout << std::endl;
+}
+
 std::vector<Entity> Config::entities() const
 {
     return m_entities;

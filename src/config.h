@@ -72,6 +72,11 @@ public:
      */
     std::vector<Marker> markers() const;
 
+    /**
+     * @brief dump prints the current configuration
+     */
+    void dump() const;
+
 protected:
     /**
      * @brief parseTransform creates a ros transform from a YAML node
