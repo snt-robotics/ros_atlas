@@ -78,7 +78,7 @@ void Config::parseRoot(const YAML::Node& node)
     }
 
     // load the markers
-    for (const YAML::Node& marker : node["markers"])
+    for (const auto& marker : node["markers"])
     {
         Marker markerData;
         markerData.id     = marker["id"].as<int>();
@@ -87,6 +87,44 @@ void Config::parseRoot(const YAML::Node& node)
 
         m_markers.push_back(markerData);
     }
+
+    // load the world sensors
+    int markerId = -1;
+    std::map<std::string, WorldSensor::Type> typeMap = {
+        { "MoCap", WorldSensor::Type::MoCap },
+        { "Camera", WorldSensor::Type::Camera }
+    };
+
+    for (const auto& sensor : node["world"])
+    {
+        WorldSensor worldSensor;
+        worldSensor.entity = sensor["entity"].as<std::string>();
+        worldSensor.topic  = sensor["topic"].as<std::string>();
+        worldSensor.name   = sensor["name"].as<std::string>();
+        worldSensor.type   = typeMap[sensor["type"].as<std::string>()];
+        worldSensor.sigma  = sensor["sigma"].as<double>();
+
+        if (worldSensor.type != WorldSensor::Type::None)
+        {
+            // Motion capture needs fake markers (ID < 0) as they do not actually detect markers
+            if (worldSensor.type == WorldSensor::Type::MoCap)
+            {
+                Marker fakeMarker;
+                fakeMarker.id     = markerId--;
+                fakeMarker.ref    = worldSensor.entity;
+                fakeMarker.transf = tf2::Transform::getIdentity();
+
+                m_markers.push_back(fakeMarker);
+            }
+
+            m_worldSensors.push_back(worldSensor);
+        }
+    }
+}
+
+std::vector<WorldSensor> Config::worldSensors() const
+{
+    return m_worldSensors;
 }
 
 std::vector<Marker> Config::markers() const
@@ -94,8 +132,14 @@ std::vector<Marker> Config::markers() const
     return m_markers;
 }
 
+std::vector<Entity> Config::entities() const
+{
+    return m_entities;
+}
+
 void Config::dump() const
 {
+    std::cout << "\n=== CONFIG ===\n";
     std::cout << "Entities:\n";
     for (const auto& entity : m_entities)
     {
@@ -115,10 +159,13 @@ void Config::dump() const
         std::cout << "    Ref. frame: " << marker.ref << "\n";
     }
 
-    std::cout << std::endl;
-}
+    std::cout << "World:\n";
+    for (const auto& sensor : m_worldSensors)
+    {
+        std::cout << "  -: " << sensor.name << "\n";
+        std::cout << "    Target: " << sensor.entity << "\n";
+    }
 
-std::vector<Entity> Config::entities() const
-{
-    return m_entities;
+    std::cout << "=== CONFIG END ===\n";
+    std::cout << std::endl;
 }

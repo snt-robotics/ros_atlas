@@ -2,6 +2,7 @@
 #include "filters.h"
 
 #include <boost/function.hpp>
+#include <geometry_msgs/PoseStamped.h>
 
 SensorListener::SensorListener()
 {
@@ -9,12 +10,12 @@ SensorListener::SensorListener()
 
 SensorListener::SensorListener(const Config& config)
 {
-    // setup sensor listeners
+    // setup marker sensor listeners
     for (const auto& entity : config.entities())
     {
         for (const auto& sensor : entity.sensors)
         {
-            using SensorCallback = void(atlas::markerdataConstPtr);
+            using SensorCallback = void(atlas::MarkerDataConstPtr);
 
             // data passed to the callback lambda
             auto from       = entity.name;
@@ -23,13 +24,35 @@ SensorListener::SensorListener(const Config& config)
 
             // callback lambda function
             // provides aditional values to the callback like the name of the reference frame
-            boost::function<SensorCallback> callbackSensor = [this, transform, from, sensorName](const atlas::markerdataConstPtr markerData) {
-                onSensorDataAvailable(from, sensorName, transform, markerData);
+            boost::function<SensorCallback> callbackSensor = [this, transform, from, sensorName](const atlas::MarkerDataConstPtr markerData) {
+                onSensorDataAvailable(from, sensorName, transform, *markerData);
             };
 
             // tell ros we want to listen to that topic
             node.subscribe<SensorCallback>(sensor.topic, 1000, callbackSensor);
         }
+    }
+
+    // setup world sensor listeners
+    for (const auto& sensor : config.worldSensors())
+    {
+        using SensorCallback = void(geometry_msgs::PoseStampedConstPtr);
+
+        // data passed to the callback lambda
+        auto to = sensor.entity;
+
+        // callback lambda function
+        // provides aditional values to the callback like the name of the reference frame
+        boost::function<SensorCallback> callbackSensor = [this, to](const geometry_msgs::PoseStampedConstPtr data) {
+            atlas::MarkerData fakeData;
+            fakeData.pos = data->pose.position;
+            fakeData.rot = data->pose.orientation;
+
+            onSensorDataAvailable("world", to, tf2::Transform::getIdentity(), fakeData);
+        };
+
+        // tell ros we want to listen to that topic
+        node.subscribe<SensorCallback>(sensor.topic, 1000, callbackSensor);
     }
 
     // setup markers
@@ -40,15 +63,15 @@ SensorListener::SensorListener(const Config& config)
     }
 }
 
-void SensorListener::onSensorDataAvailable(const std::string& from, const std::string& sensor, const tf2::Transform& sensorTransform, const atlas::markerdataConstPtr markerMsg)
+void SensorListener::onSensorDataAvailable(const std::string& from, const std::string& sensor, const tf2::Transform& sensorTransform, const atlas::MarkerData& markerMsg)
 {
     // store the transformation of the marker in the sensor frame
     tf2::Transform markerTransf;
-    markerTransf.setOrigin({ markerMsg->position.x, markerMsg->position.y, markerMsg->position.z });
-    markerTransf.setRotation({ markerMsg->orientation.x, markerMsg->orientation.y, markerMsg->orientation.z, markerMsg->orientation.w });
+    markerTransf.setOrigin({ markerMsg.pos.x, markerMsg.pos.y, markerMsg.pos.z });
+    markerTransf.setRotation({ markerMsg.rot.x, markerMsg.rot.y, markerMsg.rot.z, markerMsg.rot.w });
 
     // do the transformation from the marker pose to the base of the entity it is attached to
-    markerTransf *= m_markers[markerMsg->id].transf;
+    markerTransf *= m_markers[markerMsg.id].transf;
 
     // do the transformation from base of the marker to the base of the entity the sensor is attached to
     markerTransf *= sensorTransform;
@@ -57,11 +80,11 @@ void SensorListener::onSensorDataAvailable(const std::string& from, const std::s
     Measurement measurement;
     measurement.transform  = markerTransf;
     measurement.stamp      = ros::Time::now();
-    measurement.confidence = markerMsg->confidance;
+    measurement.sigma      = markerMsg.sigma;
     measurement.key.from   = from;
-    measurement.key.to     = m_markers[markerMsg->id].ref;
+    measurement.key.to     = m_markers[markerMsg.id].ref;
     measurement.key.sensor = sensor;
-    measurement.key.marker = markerMsg->id;
+    measurement.key.marker = markerMsg.id;
 
     m_rawSensorData[measurement.key].push_back(measurement);
 }
@@ -78,7 +101,7 @@ Measurement SensorListener::calculateWeightedMean(const SensorDataList& data) co
     // calculate the weighted sum
     for (const auto& sensorData : data)
     {
-        const double weight = std::max(0.01, sensorData.confidence);
+        const double weight = std::max(0.01, sensorData.sigma);
 
         //std::cout << filteredData.transf.getOrigin().x() << filteredData.transf.getOrigin().y() << filteredData.transf.getOrigin().z() << std::endl;
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "config.h"
-#include <atlas/markerdata.h>
+#include <atlas/MarkerData.h>
 #include <ros/ros.h>
 #include <tf2/LinearMath/Transform.h>
 
@@ -77,16 +77,16 @@ struct Measurement
 
     Measurement() {}
 
-    // pose
+    /// The pose of the entity
     tf2::Transform transform;
 
-    // todo
-    double confidence = 0.0;
+    /// The standard deviation
+    double sigma = 1.0;
 
-    // the time this data was recorded
+    /// The time this data was recorded
     ros::Time stamp;
 
-    // a unique identifier for this measurement
+    /// The unique identifier for this measurement
     Key key;
 };
 
@@ -128,7 +128,7 @@ public:
      * @param sensorTransform: The transformation from the sensor to the baselink of "from"
      * @param markerMsg: The marker message
      */
-    void onSensorDataAvailable(const std::string& from, const std::string& sensor, const tf2::Transform& sensorTransform, const atlas::markerdataConstPtr markerMsg);
+    void onSensorDataAvailable(const std::string& from, const std::string& sensor, const tf2::Transform& sensorTransform, const atlas::MarkerData& markerMsg);
 
 protected:
     Measurement calculateWeightedMean(const SensorDataList& data) const;

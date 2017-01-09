@@ -4,7 +4,7 @@
 
 const std::string yamlInput = "entities:\n"
                               "  - entity:\n"
-                              "    name: 'ardrone1'\n"
+                              "    name: 'ardrone0'\n"
                               "    sensors:\n"
                               "      - sensor:\n"
                               "        name: 'fontcam'\n"
@@ -14,7 +14,7 @@ const std::string yamlInput = "entities:\n"
                               "          rot: [0, 0, 0, 1]\n"
                               "\n"
                               "  - entity:\n"
-                              "    name: 'ardrone2'\n"
+                              "    name: 'ardrone1'\n"
                               "\n"
                               "markers:\n"
                               "  - marker:\n"
@@ -30,7 +30,21 @@ const std::string yamlInput = "entities:\n"
                               "    transform:\n"
                               "      origin: [1, 0, 0]\n"
                               "      rot: [0, 0, 0, 1]\n"
-                              "";
+                              "\n"
+                              "world:\n"
+                              "  - sensor:\n"
+                              "    name: 'optitrack0'\n"
+                              "    type: 'MoCap'\n"
+                              "    topic: '/Ardrone2SimpleLinModel_HASHMARK_0/pose'\n"
+                              "    entity: 'ardrone0'\n"
+                              "    sigma: 0.5\n"
+                              "\n"
+                              "  - sensor:\n"
+                              "    name: 'optitrack1'\n"
+                              "    type: 'MoCap'\n"
+                              "    topic: '/Ardrone2SimpleLinModel_HASHMARK_1/pose'\n"
+                              "    entity: 'ardrone1'\n"
+                              "    sigma: 0.5";
 
 TEST(Config, basic)
 {
@@ -39,13 +53,19 @@ TEST(Config, basic)
     config.loadFromString(yamlInput);
 
     ASSERT_EQ(2, config.entities().size());
-    ASSERT_EQ(2, config.markers().size());
+    ASSERT_EQ(4, config.markers().size());
 
-    ASSERT_EQ("ardrone1", config.entities()[0].name);
-    ASSERT_EQ("ardrone2", config.entities()[1].name);
+    // entity name check
+    ASSERT_EQ("ardrone0", config.entities()[0].name);
+    ASSERT_EQ("ardrone1", config.entities()[1].name);
 
+    // marker id check
     ASSERT_EQ(1, config.markers()[0].id);
     ASSERT_EQ(4, config.markers()[1].id);
+
+    // mocap fake markers check
+    ASSERT_EQ(-1, config.markers()[2].id);
+    ASSERT_EQ(-2, config.markers()[3].id);
 }
 
 TEST(Config, transform)

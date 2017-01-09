@@ -6,15 +6,37 @@
 
 /**
  * @brief The Sensor struct
- * @value name is the name of sensor and its coordinate frame
- * @value topic must comply to the definition
- * @value transf denotes the transformation from the sensor frame to the baselink
+ * @var name is the name of sensor and its coordinate frame
+ * @var topic must comply to the definition
+ * @var transf denotes the transformation from the sensor frame to the baselink
  */
 struct Sensor
 {
     std::string name;
     std::string topic;
     tf2::Transform transf;
+};
+
+/**
+ * @brief The WorldSensor struct
+ * @var name: Name of the sensor
+ * @var entity: Entity name which the sensor is measuring
+ * @var topic: The ROS topic of type stamped pose
+ * @var sigma: The standrad deviation
+ */
+struct WorldSensor
+{
+    enum class Type
+    {
+        None, ///< unspecified
+        MoCap, ///< motion capture
+        Camera ///< Camera & markers
+    };
+    std::string name;
+    std::string entity;
+    std::string topic;
+    Type type    = Type::MoCap;
+    double sigma = 1.0;
 };
 
 /**
@@ -32,7 +54,7 @@ struct Entity
 /**
  * @brief The Marker struct
  * Defines a marker by id and reference frame
- * @value transf denotes the transformation from the marker to the
+ * @var transf denotes the transformation from the marker to the
  * origin of the frame it is defined in
  */
 struct Marker
@@ -73,6 +95,12 @@ public:
     std::vector<Marker> markers() const;
 
     /**
+     * @brief worldSensors
+     * @return the world sensors as specified in the config file
+     */
+    std::vector<WorldSensor> worldSensors() const;
+
+    /**
      * @brief dump prints the current configuration
      */
     void dump() const;
@@ -90,4 +118,5 @@ protected:
 private:
     std::vector<Entity> m_entities;
     std::vector<Marker> m_markers;
+    std::vector<WorldSensor> m_worldSensors;
 };
