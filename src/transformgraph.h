@@ -19,7 +19,7 @@ class TransformGraph
    */
     struct EdgeInfo
     {
-        EdgeInfo(const SensorData& sensorData)
+        EdgeInfo(const Measurement& sensorData)
             : sensorData(sensorData)
         {
         }
@@ -37,7 +37,7 @@ class TransformGraph
             return copy;
         }
 
-        SensorData sensorData;
+        Measurement sensorData;
     };
 
     /**
@@ -89,13 +89,13 @@ class TransformGraph
      */
     struct RemovePredicateKey
     {
-        RemovePredicateKey(const MeasurementKey& key, const Graph& graph)
+        RemovePredicateKey(const Measurement::Key& key, const Graph& graph)
             : key(key)
             , graph(graph)
         {
         }
 
-        const MeasurementKey& key;
+        const Measurement::Key& key;
         const Graph& graph;
 
         bool operator()(const Edge& edge) const
@@ -160,7 +160,14 @@ public:
      * @param to: The entity name the sensor information targets
      * @param sensorData: The sensor information itself
      */
-    void updateSensorData(const std::string& from, const std::string& to, const SensorData& sensorData);
+    void updateSensorData(const Measurement& measurement);
+
+    /**
+     * @brief update updates from a sensor listener and removes expired edges
+     * @param listener: Used to update the graph
+     * @param duration: Edges older than duration are removed
+     */
+    void update(const SensorListener& listener, ros::Duration duration);
 
     /**
      * @brief removeAllEdges removes all sensor data assigned to a given entity
@@ -172,7 +179,7 @@ public:
      * @brief removeEdgesByKey remoes the edges assigned to a specific sensor information
      * @param key: The key of a specific sensor information
      */
-    void removeEdgesByKey(const MeasurementKey& key);
+    void removeEdgesByKey(const Measurement::Key& key);
 
     /**
      * @brief removeEdgesOlderThan breaks edges that are older than a given duration. Use this
@@ -188,9 +195,11 @@ public:
      */
     Pose lookupPose(const std::string& entityName) const;
 
+    /**
+     * @todo Remove?
+     */
     std::vector<std::string> lookupPath(const std::string& from, const std::string& to);
     tf2::Transform lookupTransform(const std::string& from, const std::string& to);
-
     bool canTransform(const std::string& from, const std::string& to);
 
     /**

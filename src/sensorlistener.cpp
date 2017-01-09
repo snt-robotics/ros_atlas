@@ -17,16 +17,14 @@ SensorListener::SensorListener(const Config& config)
             using SensorCallback = void(atlas::markerdataConstPtr);
 
             // data passed to the callback lambda
-            MeasurementKey key;
-            key.entity = entity.name;
-            key.sensor = sensor.name;
-
-            auto transform = sensor.transf;
+            auto from       = entity.name;
+            auto sensorName = sensor.name;
+            auto transform  = sensor.transf;
 
             // callback lambda function
             // provides aditional values to the callback like the name of the reference frame
-            boost::function<SensorCallback> callbackSensor = [this, transform, key](const atlas::markerdataConstPtr markerData) {
-                onSensorDataAvailable(key, transform, markerData);
+            boost::function<SensorCallback> callbackSensor = [this, transform, from, sensorName](const atlas::markerdataConstPtr markerData) {
+                onSensorDataAvailable(from, sensorName, transform, markerData);
             };
 
             // tell ros we want to listen to that topic
@@ -42,7 +40,7 @@ SensorListener::SensorListener(const Config& config)
     }
 }
 
-void SensorListener::onSensorDataAvailable(const MeasurementKey& measurementKey, const tf2::Transform& sensorTransform, const atlas::markerdataConstPtr markerMsg)
+void SensorListener::onSensorDataAvailable(const std::string& from, const std::string& sensor, const tf2::Transform& sensorTransform, const atlas::markerdataConstPtr markerMsg)
 {
     // store the transformation of the marker in the sensor frame
     tf2::Transform markerTransf;
@@ -56,19 +54,21 @@ void SensorListener::onSensorDataAvailable(const MeasurementKey& measurementKey,
     markerTransf *= sensorTransform;
 
     // store it as raw data that needs filtering
-    SensorData data;
-    data.transform  = markerTransf;
-    data.stamp      = ros::Time::now();
-    data.confidence = markerMsg->confidance;
-    data.key        = measurementKey;
-    data.key.marker = markerMsg->id;
+    Measurement measurement;
+    measurement.transform  = markerTransf;
+    measurement.stamp      = ros::Time::now();
+    measurement.confidence = markerMsg->confidance;
+    measurement.key.from   = from;
+    measurement.key.to     = m_markers[markerMsg->id].ref;
+    measurement.key.sensor = sensor;
+    measurement.key.marker = markerMsg->id;
 
-    m_rawSensorData[measurementKey.entity][markerMsg->id].push_back(data);
+    m_rawSensorData[measurement.key].push_back(measurement);
 }
 
-SensorData SensorListener::calculateWeightedMean(const SensorDataList& data) const
+Measurement SensorListener::calculateWeightedMean(const SensorDataList& data) const
 {
-    SensorData filteredData;
+    Measurement filteredData;
 
     WeightedMean meanFilter;
 
@@ -93,29 +93,16 @@ SensorData SensorListener::calculateWeightedMean(const SensorDataList& data) con
     return filteredData;
 }
 
-FilteredSensorDataMap SensorListener::filteredSensorData() const
+SensorDataList SensorListener::filteredSensorData() const
 {
-    FilteredSensorDataMap filteredSensorData;
+    SensorDataList filteredSensorData;
 
     // calculate a weighted average over the sensor data
     for (const auto& keyval : m_rawSensorData)
     {
-        const auto& entityName = keyval.first;
-        const auto& markerData = keyval.second;
-
-        for (const auto& keyval : markerData)
-        {
-            const auto& markerId   = keyval.first;
-            const auto& sensorData = keyval.second;
-
-            filteredSensorData[entityName][markerId] = calculateWeightedMean(sensorData);
-        }
+        const auto& measurements = keyval.second;
+        filteredSensorData.push_back(calculateWeightedMean(measurements));
     }
 
     return filteredSensorData;
-}
-
-SensorDataMap SensorListener::rawSensorData() const
-{
-    return m_rawSensorData;
 }

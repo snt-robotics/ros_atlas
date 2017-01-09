@@ -10,7 +10,8 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   message_generation
   std_msgs
-  tf
+  tf2
+  tf2_ros
   aruco_all_codes_tracker
 )
 
@@ -143,6 +144,7 @@ SET(SRC_FILES
    src/transformgraph.cpp
    src/helpers.cpp
    src/kalmanfilter.cpp
+   src/transformgraphbroadcaster.cpp
 )
 
 SET(EXT_LIBS

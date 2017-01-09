@@ -16,11 +16,11 @@ TEST(Graphs, transformgraph)
     graph.addEntity("C");
     graph.addEntity("D");
     graph.addEntity("E");
-    graph.updateSensorData("A", "B", { { "A", "testSensor", 0 } });
+    graph.updateSensorData({ { "A", "B", "testSensor", 0 } });
     ASSERT_EQ(2, graph.numberOfEdges());
-    graph.updateSensorData("D", "E", { { "D", "testSensor", 0 } });
+    graph.updateSensorData({ { "D", "E", "testSensor", 0 } });
     ASSERT_EQ(4, graph.numberOfEdges());
-    graph.updateSensorData("D", "E", { { "D", "testSensor", 1 } });
+    graph.updateSensorData({ { "D", "E", "testSensor", 1 } });
     ASSERT_EQ(6, graph.numberOfEdges());
     //graph.updateSensorData("A", "B", SensorData());
     //graph.updateSensorData("D", "E", SensorData());
@@ -29,7 +29,7 @@ TEST(Graphs, transformgraph)
     ASSERT_TRUE(graph.canTransform("D", "E"));
     ASSERT_FALSE(graph.canTransform("A", "C"));
 
-    graph.removeEdgesByKey({ "A", "testSensor", 0 });
+    graph.removeEdgesByKey({ "A", "B", "testSensor", 0 });
 
     ASSERT_FALSE(graph.canTransform("A", "B"));
     ASSERT_EQ(4, graph.numberOfEdges());
@@ -42,12 +42,12 @@ TEST(Graphs, printTest)
     graph.addEntity("B");
     graph.addEntity("C");
 
-    graph.updateSensorData("world", "A", { { "world", "optitrack", -1 } });
-    graph.updateSensorData("A", "world", { { "A", "cam1", 0 } });
-    graph.updateSensorData("A", "world", { { "A", "cam1", 1 } });
+    graph.updateSensorData({ { "world", "A", "optitrack", -1 } });
+    graph.updateSensorData({ { "A", "world", "cam1", 0 } });
+    graph.updateSensorData({ { "A", "world", "cam1", 1 } });
 
-    graph.updateSensorData("A", "B", { { "A", "cam0", 2 } });
-    graph.updateSensorData("B", "C", { { "B", "cam0", 3 } });
+    graph.updateSensorData({ { "A", "B", "cam0", 2 } });
+    graph.updateSensorData({ { "B", "C", "cam0", 3 } });
 
     graph.save("atlas/Testing/graph1.dot");
 
@@ -62,14 +62,14 @@ TEST(Graphs, cycleTest)
     graph.addEntity("B");
     graph.addEntity("C");
 
-    graph.updateSensorData("world", "A", { { "world", "optitrack", -1 } });
-    graph.updateSensorData("world", "B", { { "world", "optitrack", -2 } });
+    graph.updateSensorData({ { "world", "A", "optitrack", -1 } });
+    graph.updateSensorData({ { "world", "B", "optitrack", -2 } });
 
-    graph.updateSensorData("A", "B", { { "A", "cam0", 0 } });
-    graph.updateSensorData("B", "A", { { "B", "cam0", 1 } });
+    graph.updateSensorData({ { "A", "B", "cam0", 0 } });
+    graph.updateSensorData({ { "B", "A", "cam0", 1 } });
 
-    graph.updateSensorData("A", "C", { { "A", "cam0", 2 } });
-    graph.updateSensorData("B", "C", { { "B", "cam0", 2 } });
+    graph.updateSensorData({ { "A", "C", "cam0", 2 } });
+    graph.updateSensorData({ { "B", "C", "cam0", 2 } });
 
     graph.save("atlas/Testing/graphcycle.dot");
 
@@ -83,15 +83,15 @@ TEST(Graphs, cycleTestEval)
     graph.addEntity("B");
     graph.addEntity("C");
 
-    graph.updateSensorData("world", "A", { { "world", "optitrack", -1 }, { 1, 1, 0 } });
-    graph.updateSensorData("world", "B", { { "world", "optitrack", -2 }, { 1, -1, 0 } });
+    graph.updateSensorData({ { "world", "A", "optitrack", -1 }, { 1, 1, 0 } });
+    graph.updateSensorData({ { "world", "B", "optitrack", -2 }, { 1, -1, 0 } });
 
     // these should have no effect as they are edges on the same level (i.e. same distance to the world)
-    graph.updateSensorData("A", "B", { { "A", "cam0", 0 }, { 0, -100, 0 } });
-    graph.updateSensorData("B", "A", { { "B", "cam0", 1 }, { 0, -100, 0 } });
+    graph.updateSensorData({ { "A", "B", "cam0", 0 }, { 0, -100, 0 } });
+    graph.updateSensorData({ { "B", "A", "cam0", 1 }, { 0, -100, 0 } });
 
-    graph.updateSensorData("A", "C", { { "A", "cam0", 2 }, { 1, 1, 0 } });
-    graph.updateSensorData("B", "C", { { "B", "cam0", 2 }, { 1, -1, 0 } });
+    graph.updateSensorData({ { "A", "C", "cam0", 2 }, { 1, 1, 0 } });
+    graph.updateSensorData({ { "B", "C", "cam0", 2 }, { 1, -1, 0 } });
 
     graph.eval();
     graph.save("atlas/Testing/graphcycleEval.dot");
@@ -105,7 +105,7 @@ TEST(Graphs, expire)
 {
     TransformGraph graph;
     graph.addEntity("A");
-    graph.updateSensorData("world", "A", { { "world", "optitrack", -1 }, { 1, 1, 0 } });
+    graph.updateSensorData({ { "world", "A", "optitrack", -1 }, { 1, 1, 0 } });
 
     ASSERT_TRUE(graph.canTransform("world", "A"));
 
@@ -114,9 +114,21 @@ TEST(Graphs, expire)
 
     ASSERT_FALSE(graph.canTransform("world", "A"));
 
-    graph.updateSensorData("world", "A", { { "world", "optitrack", -1 }, { 1, 1, 0 } });
+    graph.updateSensorData({ { "world", "A", "optitrack", -1 }, { 1, 1, 0 } });
     std::this_thread::sleep_for(std::chrono::milliseconds(20)); // sleep for 20ms
     graph.removeEdgesOlderThan(ros::Duration(30.0 / 1000.0)); // older than 30ms
 
     ASSERT_TRUE(graph.canTransform("world", "A"));
+}
+
+TEST(Graphs, expectThrow)
+{
+    TransformGraph graph;
+    graph.addEntity("A");
+    graph.addEntity("B");
+    graph.updateSensorData({ { "A", "B", "cam0", 0 }, { 1, 1, 0 } });
+    graph.eval();
+
+    EXPECT_ANY_THROW(graph.lookupPose("A"));
+    EXPECT_ANY_THROW(graph.lookupPose("B"));
 }
