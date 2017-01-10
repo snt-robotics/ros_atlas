@@ -24,23 +24,37 @@ tf2::Transform Config::parseTransform(const YAML::Node& node) const
     if (node.IsNull())
         return tf2::Transform::getIdentity();
 
-    if (node["rot"].size() != 4)
-        ROS_ERROR("Config: 'rot' is expected to have 4 elements");
-
-    if (node["origin"].size() != 3)
-        ROS_ERROR("Config: 'origin' is expected to have 3 elements");
-
-    tf2::Quaternion rot;
+    tf2::Quaternion rot = tf2::Quaternion::getIdentity();
     tf2::Vector3 origin;
 
-    rot.setX(node["rot"][0].as<double>());
-    rot.setY(node["rot"][1].as<double>());
-    rot.setZ(node["rot"][2].as<double>());
-    rot.setW(node["rot"][3].as<double>());
+    // parse rotation
+    if (node["rot"].size() == 4)
+    {
+        rot.setX(node["rot"][0].as<double>());
+        rot.setY(node["rot"][1].as<double>());
+        rot.setZ(node["rot"][2].as<double>());
+        rot.setW(node["rot"][3].as<double>());
+    }
+    else if (node["rot"].size() == 3)
+    {
+        rot.setRPY(node["rot"][0].as<double>(), node["rot"][1].as<double>(), node["rot"][2].as<double>());
+    }
+    else
+    {
+        ROS_ERROR("Config: 'rot' is expected to have either 3 elements (YPR) or 4 elements (quaternion");
+    }
 
-    origin.setX(node["origin"][0].as<double>());
-    origin.setY(node["origin"][1].as<double>());
-    origin.setZ(node["origin"][2].as<double>());
+    // parse position
+    if (node["origin"].size() == 3)
+    {
+        origin.setX(node["origin"][0].as<double>());
+        origin.setY(node["origin"][1].as<double>());
+        origin.setZ(node["origin"][2].as<double>());
+    }
+    else
+    {
+        ROS_ERROR("Config: 'origin' is expected to have 3 elements");
+    }
 
     return tf2::Transform(rot, origin);
 }
