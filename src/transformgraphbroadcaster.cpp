@@ -22,17 +22,22 @@ void TransformGraphBroadcaster::broadcast(const TransformGraph& graph, bool publ
         Pose pose;
         try
         {
+            // this method throws if a lookup is not possible
             pose = graph.lookupPose(entityName);
+
+            // broadcast the entity's pose in world frame
             broadcast("world", entityName, pose);
 
             if (publishMarkers)
             {
+                // show the markers attached to that entity
                 for (const auto& marker : m_markers[entityName])
                     broadcast(entityName, "Marker " + std::to_string(marker.id), marker.transf);
             }
 
             if (publishEntitySensors)
             {
+                // show the sensors attached to that entity
                 for (const auto& sensor : m_entitySensors[entityName])
                     broadcast(entityName, sensor.name, sensor.transf);
             }

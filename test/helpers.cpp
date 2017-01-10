@@ -7,6 +7,8 @@
 #include <eigen3/Eigen/Core>
 #include <iostream>
 
+constexpr double eps = 0.001;
+
 ::std::ostream& operator<<(std::ostream& os, const std::vector<std::string> vec)
 {
     for (const auto& str : vec)
@@ -18,7 +20,7 @@
 // Equality helpers
 bool scalarEq(double a, double b)
 {
-    return std::abs(a - b) < 0.001;
+    return std::abs(a - b) < eps;
 }
 
 bool vec3Eq(const tf2::Vector3& a, const tf2::Vector3& b)
@@ -97,11 +99,7 @@ bool vecEq(const Eigen::VectorXd& a, const Eigen::VectorXd& b)
         return false;
     }
 
-    auto ref = Eigen::VectorXd(a);
-    ref.setOnes();
-    ref *= 0.0001;
-    bool test = (a - b).isMuchSmallerThan(ref);
-
+    bool test = (a - b).norm() < eps;
     if (!test)
     {
         Eigen::IOFormat cleanfmt(4, 0, ", ", "", "[", "]");
