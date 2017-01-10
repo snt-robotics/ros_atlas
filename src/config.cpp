@@ -24,10 +24,8 @@ tf2::Transform Config::parseTransform(const YAML::Node& node) const
     if (node.IsNull())
         return tf2::Transform::getIdentity();
 
-    tf2::Quaternion rot = tf2::Quaternion::getIdentity();
-    tf2::Vector3 origin;
-
     // parse rotation
+    tf2::Quaternion rot = tf2::Quaternion::getIdentity();
     if (node["rot"].size() == 4)
     {
         rot.setX(node["rot"][0].as<double>());
@@ -45,6 +43,7 @@ tf2::Transform Config::parseTransform(const YAML::Node& node) const
     }
 
     // parse position
+    tf2::Vector3 origin;
     if (node["origin"].size() == 3)
     {
         origin.setX(node["origin"][0].as<double>());
@@ -108,7 +107,7 @@ void Config::parseRoot(const YAML::Node& node)
     // load the world sensors
     int markerId = -1;
     std::map<std::string, WorldSensor::Type> typeMap = {
-        { "GPS", WorldSensor::Type::GPS },
+        { "Global", WorldSensor::Type::Global },
         { "Camera", WorldSensor::Type::Camera }
     };
 
@@ -125,7 +124,7 @@ void Config::parseRoot(const YAML::Node& node)
         if (worldSensor.type != WorldSensor::Type::None)
         {
             // Motion capture needs fake markers (ID < 0) as they do not actually detect markers
-            if (worldSensor.type == WorldSensor::Type::GPS)
+            if (worldSensor.type == WorldSensor::Type::Global)
             {
                 Marker fakeMarker;
                 fakeMarker.id     = markerId--;

@@ -23,66 +23,18 @@ void TransformGraphBroadcaster::broadcast(const TransformGraph& graph, bool publ
         try
         {
             pose = graph.lookupPose(entityName);
-
-            // compose geometry message
-            geometry_msgs::TransformStamped transform;
-            transform.header.stamp    = ros::Time::now();
-            transform.header.frame_id = "world"; // the lookup is always in world coordinates
-            transform.child_frame_id  = entityName;
-
-            transform.transform.rotation.x = pose.rot.x();
-            transform.transform.rotation.y = pose.rot.y();
-            transform.transform.rotation.z = pose.rot.z();
-            transform.transform.rotation.w = pose.rot.w();
-
-            transform.transform.translation.x = pose.pos.x();
-            transform.transform.translation.y = pose.pos.y();
-            transform.transform.translation.z = pose.pos.z();
-
-            m_tfbc.sendTransform(transform);
+            broadcast("world", entityName, pose);
 
             if (publishMarkers)
             {
                 for (const auto& marker : m_markers[entityName])
-                {
-                    geometry_msgs::TransformStamped transform;
-                    transform.header.stamp    = ros::Time::now();
-                    transform.header.frame_id = entityName;
-                    transform.child_frame_id  = "Marker " + std::to_string(marker.id);
-
-                    transform.transform.rotation.x = marker.transf.getRotation().x();
-                    transform.transform.rotation.y = marker.transf.getRotation().y();
-                    transform.transform.rotation.z = marker.transf.getRotation().z();
-                    transform.transform.rotation.w = marker.transf.getRotation().w();
-
-                    transform.transform.translation.x = marker.transf.getOrigin().x();
-                    transform.transform.translation.y = marker.transf.getOrigin().y();
-                    transform.transform.translation.z = marker.transf.getOrigin().z();
-
-                    m_tfbc.sendTransform(transform);
-                }
+                    broadcast(entityName, "Marker " + std::to_string(marker.id), marker.transf);
             }
 
             if (publishEntitySensors)
             {
                 for (const auto& sensor : m_entitySensors[entityName])
-                {
-                    geometry_msgs::TransformStamped transform;
-                    transform.header.stamp    = ros::Time::now();
-                    transform.header.frame_id = entityName;
-                    transform.child_frame_id  = sensor.name;
-
-                    transform.transform.rotation.x = sensor.transf.getRotation().x();
-                    transform.transform.rotation.y = sensor.transf.getRotation().y();
-                    transform.transform.rotation.z = sensor.transf.getRotation().z();
-                    transform.transform.rotation.w = sensor.transf.getRotation().w();
-
-                    transform.transform.translation.x = sensor.transf.getOrigin().x();
-                    transform.transform.translation.y = sensor.transf.getOrigin().y();
-                    transform.transform.translation.z = sensor.transf.getOrigin().z();
-
-                    m_tfbc.sendTransform(transform);
-                }
+                    broadcast(entityName, sensor.name, sensor.transf);
             }
         }
         catch (const std::string&)
@@ -94,22 +46,44 @@ void TransformGraphBroadcaster::broadcast(const TransformGraph& graph, bool publ
     if (publishWorldSensors)
     {
         for (const auto& sensor : m_worldSensors)
-        {
-            geometry_msgs::TransformStamped transform;
-            transform.header.stamp    = ros::Time::now();
-            transform.header.frame_id = "world";
-            transform.child_frame_id  = sensor.name;
-
-            transform.transform.rotation.x = sensor.transf.getRotation().x();
-            transform.transform.rotation.y = sensor.transf.getRotation().y();
-            transform.transform.rotation.z = sensor.transf.getRotation().z();
-            transform.transform.rotation.w = sensor.transf.getRotation().w();
-
-            transform.transform.translation.x = sensor.transf.getOrigin().x();
-            transform.transform.translation.y = sensor.transf.getOrigin().y();
-            transform.transform.translation.z = sensor.transf.getOrigin().z();
-
-            m_tfbc.sendTransform(transform);
-        }
+            broadcast("world", sensor.name, sensor.transf);
     }
+}
+
+void TransformGraphBroadcaster::broadcast(const std::string& frame, const std::string& child, const tf2::Transform transf)
+{
+    geometry_msgs::TransformStamped transform;
+    transform.header.stamp    = ros::Time::now();
+    transform.header.frame_id = frame;
+    transform.child_frame_id  = child;
+
+    transform.transform.rotation.x = transf.getRotation().x();
+    transform.transform.rotation.y = transf.getRotation().y();
+    transform.transform.rotation.z = transf.getRotation().z();
+    transform.transform.rotation.w = transf.getRotation().w();
+
+    transform.transform.translation.x = transf.getOrigin().x();
+    transform.transform.translation.y = transf.getOrigin().y();
+    transform.transform.translation.z = transf.getOrigin().z();
+
+    m_tfbc.sendTransform(transform);
+}
+
+void TransformGraphBroadcaster::broadcast(const std::string& frame, const std::string& child, const Pose pose)
+{
+    geometry_msgs::TransformStamped transform;
+    transform.header.stamp    = ros::Time::now();
+    transform.header.frame_id = frame;
+    transform.child_frame_id  = child;
+
+    transform.transform.rotation.x = pose.rot.x();
+    transform.transform.rotation.y = pose.rot.y();
+    transform.transform.rotation.z = pose.rot.z();
+    transform.transform.rotation.w = pose.rot.w();
+
+    transform.transform.translation.x = pose.pos.x();
+    transform.transform.translation.y = pose.pos.y();
+    transform.transform.translation.z = pose.pos.z();
+
+    m_tfbc.sendTransform(transform);
 }

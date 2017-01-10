@@ -36,7 +36,7 @@ SensorListener::SensorListener(const Config& config)
     // setup world sensor listeners
     for (const auto& sensor : config.worldSensors())
     {
-        if (sensor.type == WorldSensor::Type::GPS)
+        if (sensor.type == WorldSensor::Type::Global)
         {
             using SensorCallback = void(geometry_msgs::PoseStampedConstPtr);
 

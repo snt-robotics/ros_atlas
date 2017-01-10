@@ -12,6 +12,10 @@ public:
 
     void broadcast(const TransformGraph& graph, bool publishMarkers = false, bool publishEntitySensors = false, bool publishWorldSensors = false);
 
+protected:
+    void broadcast(const std::string& frame, const std::string& child, const tf2::Transform transf);
+    void broadcast(const std::string& frame, const std::string& child, const Pose pose);
+
 private:
     tf2_ros::TransformBroadcaster m_tfbc;
 
