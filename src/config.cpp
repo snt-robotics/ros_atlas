@@ -39,7 +39,7 @@ tf2::Transform Config::parseTransform(const YAML::Node& node) const
     }
     else
     {
-        ROS_ERROR("Config: 'rot' is expected to have either 3 elements (YPR) or 4 elements (quaternion");
+        ROS_WARN_ONCE("Config: 'rot' is expected to have either 3 elements (YPR) or 4 elements (quaternion). Default is {0,0,0,1}");
     }
 
     // parse position
@@ -52,7 +52,7 @@ tf2::Transform Config::parseTransform(const YAML::Node& node) const
     }
     else
     {
-        ROS_ERROR("Config: 'origin' is expected to have 3 elements");
+        ROS_WARN_ONCE("Config: 'origin' is expected to have 3 elements. Default is {0,0,0}");
     }
 
     return tf2::Transform(rot, origin);
@@ -126,12 +126,16 @@ void Config::parseRoot(const YAML::Node& node)
             // Motion capture needs fake markers (ID < 0) as they do not actually detect markers
             if (worldSensor.type == WorldSensor::Type::Global)
             {
+                worldSensor.fakeId = markerId;
+
                 Marker fakeMarker;
-                fakeMarker.id     = markerId--;
+                fakeMarker.id     = markerId;
                 fakeMarker.ref    = worldSensor.entity;
                 fakeMarker.transf = tf2::Transform::getIdentity();
 
                 m_markers.push_back(fakeMarker);
+
+                markerId--;
             }
 
             m_worldSensors.push_back(worldSensor);

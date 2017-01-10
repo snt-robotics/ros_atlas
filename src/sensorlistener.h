@@ -134,7 +134,8 @@ protected:
     Measurement calculateWeightedMean(const SensorDataList& data) const;
 
 private:
-    ros::NodeHandle node;
+    ros::NodeHandle m_node;
+    std::vector<ros::Subscriber> m_subscribers;
 
     // used to map from the marker id to the target entity
     std::map<int, Marker> m_markers;

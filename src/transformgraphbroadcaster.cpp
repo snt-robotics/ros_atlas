@@ -26,7 +26,8 @@ void TransformGraphBroadcaster::broadcast(const TransformGraph& graph, bool publ
             pose = graph.lookupPose(entityName);
 
             // broadcast the entity's pose in world frame
-            broadcast("world", entityName, pose);
+            if (entityName != "world")
+                broadcast("world", entityName, pose);
 
             if (publishMarkers)
             {

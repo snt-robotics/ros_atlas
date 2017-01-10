@@ -19,7 +19,7 @@ int main(int argc, char** argv)
     // init atlas
     Config config(configFile);
     SensorListener sensorListener(config);
-    TransformGraph graph;
+    TransformGraph graph(config);
     TransformGraphBroadcaster broadcaster(config);
 
     // print the config
@@ -36,5 +36,6 @@ int main(int argc, char** argv)
         sensorListener.clear();
 
         loopRate.sleep();
+        ros::spinOnce();
     }
 }

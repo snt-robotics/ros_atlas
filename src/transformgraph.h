@@ -1,5 +1,6 @@
 #pragma once
 
+#include "config.h"
 #include "filters.h"
 #include "helpers.h"
 #include "sensorlistener.h"
@@ -134,6 +135,11 @@ public:
      * @brief TransformGraph creates an empty graph only containing a "world" entity
      */
     TransformGraph();
+
+    /**
+     * @brief TransformGraph creates an empty graph only containing a "world" entity
+     */
+    TransformGraph(const Config& config);
 
     /**
      * @brief addEntity creates a named vertex in the graph

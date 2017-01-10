@@ -24,8 +24,9 @@ void WeightedMean::addQuat(const tf2::Quaternion& quat, double weight)
 
 void WeightedMean::clear()
 {
-    m_vectors = Eigen::Vector3d();
-    m_quats   = Eigen::Matrix4Xd();
+    m_vectors       = { 0, 0, 0 };
+    m_vectorWeights = 0.0;
+    m_quats         = Eigen::Matrix4Xd();
 }
 
 tf2::Vector3 WeightedMean::weightedMeanVec3() const

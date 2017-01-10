@@ -38,6 +38,7 @@ struct WorldSensor
     tf2::Transform transf = tf2::Transform::getIdentity(); ///< transform to world frame
     Type type             = Type::None;
     double sigma          = 1.0;
+    int fakeId            = -1;
 };
 
 /**

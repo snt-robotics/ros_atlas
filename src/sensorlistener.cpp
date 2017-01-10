@@ -29,7 +29,7 @@ SensorListener::SensorListener(const Config& config)
             };
 
             // tell ros we want to listen to that topic
-            node.subscribe<SensorCallback>(sensor.topic, 1000, callbackSensor);
+            m_subscribers.push_back(m_node.subscribe<SensorCallback>(sensor.topic, 1000, callbackSensor));
         }
     }
 
@@ -41,20 +41,24 @@ SensorListener::SensorListener(const Config& config)
             using SensorCallback = void(geometry_msgs::PoseStampedConstPtr);
 
             // data passed to the callback lambda
-            auto to = sensor.entity;
+            auto sensorName = sensor.name;
+            auto id         = sensor.fakeId;
+            auto sigma      = sensor.sigma;
 
             // callback lambda function
             // provides aditional values to the callback like the name of the reference frame
-            boost::function<SensorCallback> callbackSensor = [this, to](const geometry_msgs::PoseStampedConstPtr data) {
+            boost::function<SensorCallback> callbackSensor = [this, sensorName, id, sigma](const geometry_msgs::PoseStampedConstPtr data) {
                 atlas::MarkerData fakeData;
-                fakeData.pos = data->pose.position;
-                fakeData.rot = data->pose.orientation;
+                fakeData.pos   = data->pose.position;
+                fakeData.rot   = data->pose.orientation;
+                fakeData.id    = id;
+                fakeData.sigma = sigma;
 
-                onSensorDataAvailable("world", to, tf2::Transform::getIdentity(), fakeData);
+                onSensorDataAvailable("world", sensorName, tf2::Transform::getIdentity(), fakeData);
             };
 
             // tell ros we want to listen to that topic
-            node.subscribe<SensorCallback>(sensor.topic, 1000, callbackSensor);
+            m_subscribers.push_back(m_node.subscribe<SensorCallback>(sensor.topic, 1000, callbackSensor));
         }
         else // marker based callback
         {
@@ -72,7 +76,7 @@ SensorListener::SensorListener(const Config& config)
             };
 
             // tell ros we want to listen to that topic
-            node.subscribe<SensorCallback>(sensor.topic, 1000, callbackSensor);
+            m_subscribers.push_back(m_node.subscribe<SensorCallback>(sensor.topic, 1000, callbackSensor));
         }
     }
 
@@ -109,26 +113,27 @@ void SensorListener::onSensorDataAvailable(const std::string& from, const std::s
 
     m_rawSensorData[measurement.key].push_back(measurement);
 }
-
+#include "helpers.h"
 Measurement SensorListener::calculateWeightedMean(const SensorDataList& data) const
 {
-    Measurement filteredData;
-
     WeightedMean meanFilter;
 
     if (data.empty())
-        return filteredData;
+        return Measurement();
+
+    Measurement filteredData = data.front();
 
     // calculate the weighted sum
     for (const auto& sensorData : data)
     {
         const double weight = std::max(0.01, sensorData.sigma);
 
-        //std::cout << filteredData.transf.getOrigin().x() << filteredData.transf.getOrigin().y() << filteredData.transf.getOrigin().z() << std::endl;
-
         meanFilter.addVec3(sensorData.transform.getOrigin(), weight);
         meanFilter.addQuat(sensorData.transform.getRotation(), weight);
     }
+
+    if (hasNanValues(meanFilter.weightedMeanVec3()))
+        int c = 0;
 
     // calculate the weighted average
     filteredData.transform.setOrigin(meanFilter.weightedMeanVec3());

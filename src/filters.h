@@ -19,7 +19,7 @@ public:
     tf2::Quaternion weightedMeanQuat() const;
 
 private:
-    Eigen::Vector3d m_vectors;
+    Eigen::Vector3d m_vectors = { 0, 0, 0 };
     Eigen::Matrix4Xd m_quats;
 
     double m_vectorWeights = 0.0;
@@ -32,6 +32,6 @@ public:
     void addQuat(const tf2::Quaternion& quat);
 
 private:
-    Eigen::Vector3d m_vectors;
+    Eigen::Vector3d m_vectors = { 0, 0, 0 };
     Eigen::Matrix4Xd m_quats;
 };

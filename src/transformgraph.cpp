@@ -13,6 +13,13 @@ TransformGraph::TransformGraph()
     vertexInfo[m_labeledVertex["world"]].evaluated = true;
 }
 
+TransformGraph::TransformGraph(const Config& config)
+    : TransformGraph()
+{
+    for (const auto& entity : config.entities())
+        addEntity(entity.name);
+}
+
 void TransformGraph::addEntity(const std::string& name)
 {
     // adding entities is like adding vertices to the graph
@@ -53,8 +60,11 @@ void TransformGraph::updateSensorData(const Measurement& measurement)
     // edges do not exist, add them
     auto info = EdgeInfo(measurement);
 
-    boost::add_edge(m_labeledVertex[measurement.key.from], m_labeledVertex[measurement.key.to], { 1.0, info }, m_graph);
-    boost::add_edge(m_labeledVertex[measurement.key.to], m_labeledVertex[measurement.key.from], { 1.0, info }, m_graph);
+    if (hasEntity(measurement.key.from) && hasEntity(measurement.key.to))
+    {
+        boost::add_edge(m_labeledVertex[measurement.key.from], m_labeledVertex[measurement.key.to], { 1.0, info }, m_graph);
+        boost::add_edge(m_labeledVertex[measurement.key.to], m_labeledVertex[measurement.key.from], { 1.0, info }, m_graph);
+    }
 }
 
 void TransformGraph::update(const SensorListener& listener, ros::Duration duration)
