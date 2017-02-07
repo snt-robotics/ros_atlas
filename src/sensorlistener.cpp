@@ -104,7 +104,7 @@ void SensorListener::onSensorDataAvailable(const std::string& from, const std::s
     markerTransf.setRotation({ markerMsg.rot.x, markerMsg.rot.y, markerMsg.rot.z, markerMsg.rot.w });
 
     // calculate the transform
-    tf2::Transform transf = m_markers[markerMsg.id].transf.inverse() * sensorTransform * markerTransf;
+    tf2::Transform transf = sensorTransform * markerTransf * m_markers[markerMsg.id].transf.inverse();
 
     // store it as raw data that needs filtering
     Measurement measurement;

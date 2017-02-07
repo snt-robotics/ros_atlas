@@ -19,7 +19,7 @@ TEST(Sensors, test1)
     auto sensorData = listener.filteredSensorData();
     auto result     = sensorData.front().transform.getOrigin();
 
-    tf2::Vector3 expectedPos = { 5, 0, 0 };
+    tf2::Vector3 expectedPos = { 15, 0, 0 };
 
     ASSERT_TRUE(vec3Eq(expectedPos, result));
 }
