@@ -65,6 +65,11 @@ void TransformGraph::updateSensorData(const Measurement& measurement)
         boost::add_edge(m_labeledVertex[measurement.key.from], m_labeledVertex[measurement.key.to], { 1.0, info }, m_graph);
         boost::add_edge(m_labeledVertex[measurement.key.to], m_labeledVertex[measurement.key.from], { 1.0, info }, m_graph);
     }
+    else
+    {
+        // missing entity
+        ROS_WARN("Graph: Missing entity %s, %s", measurement.key.from.c_str(), measurement.key.to.c_str());
+    }
 }
 
 void TransformGraph::update(const SensorListener& listener, ros::Duration duration)
@@ -251,6 +256,7 @@ void TransformGraph::eval()
         });
         const double minSigma = eInfo[*minItr].sensorData.sigma;
 
+        // evaluate edges
         for (auto edge : boost::make_iterator_range(itrs.first, itrs.second))
         {
             // get the source vertex of that edge
@@ -282,6 +288,7 @@ void TransformGraph::eval()
             vInfo[currentVertex].filter.addQuat(result.getRotation(), weight);
         }
 
+        // get the results from the filter
         vInfo[currentVertex].pose.pos = vInfo[currentVertex].filter.weightedMeanVec3();
         vInfo[currentVertex].pose.rot = vInfo[currentVertex].filter.weightedMeanQuat();
 
