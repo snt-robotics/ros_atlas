@@ -226,6 +226,12 @@ public:
      */
     void save(const std::string& filename);
 
+    /**
+     * @brief clearEvalFlag
+     * Clears the "evaluated" flag of all entites
+     */
+    void clearEvalFlag();
+
 private:
     // the graph container containing all our sensor information
     Graph m_graph;

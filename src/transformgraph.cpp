@@ -80,6 +80,8 @@ void TransformGraph::update(const SensorListener& listener, ros::Duration durati
         updateSensorData(measurement);
 
     removeEdgesOlderThan(duration);
+
+    clearEvalFlag();
     eval();
 }
 
@@ -126,12 +128,12 @@ std::vector<std::string> TransformGraph::lookupPath(const std::string& from, con
     boost::dijkstra_shortest_paths(m_graph, start, boost::predecessor_map(p).distance_map(d));
 
     // print graph
-    VertexIterator vi, vend;
-    for (boost::tie(vi, vend) = boost::vertices(m_graph); vi != vend; ++vi)
-    {
-        std::cout << "distance(" << *vi << ") = " << d[(*vi)] << ", ";
-        std::cout << "parent(" << *vi << ") = " << p[*vi] << std::endl;
-    }
+    //    VertexIterator vi, vend;
+    //    for (boost::tie(vi, vend) = boost::vertices(m_graph); vi != vend; ++vi)
+    //    {
+    //        std::cout << "distance(" << *vi << ") = " << d[(*vi)] << ", ";
+    //        std::cout << "parent(" << *vi << ") = " << p[*vi] << std::endl;
+    //    }
 
     // travel from goal to start
     std::vector<Edge> path;
@@ -151,7 +153,7 @@ std::vector<std::string> TransformGraph::lookupPath(const std::string& from, con
         path.push_back(edge);
     }
 
-    std::cout << "Shortest path from " << from << " to " << to << ":" << std::endl;
+    //    std::cout << "Shortest path from " << from << " to " << to << ":" << std::endl;
     for (auto itr = path.rbegin(); itr != path.rend(); ++itr)
     {
         auto sourceVertex = boost::source(*itr, m_graph);
@@ -162,15 +164,15 @@ std::vector<std::string> TransformGraph::lookupPath(const std::string& from, con
 
         const auto& sourceName = info[sourceVertex].name;
         const auto& targetName = info[targetVertex].name;
-        std::cout << sourceName << " -> " << targetName << " = " << boost::get(boost::edge_weight, m_graph, *itr) << std::endl;
+        //        std::cout << sourceName << " -> " << targetName << " = " << boost::get(boost::edge_weight, m_graph, *itr) << std::endl;
 
         if (itr == path.rbegin())
             verticesInPath.push_back(sourceName);
 
         verticesInPath.push_back(targetName);
     }
-    std::cout << std::endl;
-    std::cout << "Distance: " << d[goal] << std::endl;
+    //    std::cout << std::endl;
+    //    std::cout << "Distance: " << d[goal] << std::endl;
 
     return verticesInPath;
 }
@@ -265,7 +267,7 @@ void TransformGraph::eval()
             // if the source hasn't been evaluated yet, we just skip it
             // as it is of no value to us
             // The same applies to vertices that have the same distance to the world
-            if (!vInfo[sourceVertex].evaluated || vInfo[currentVertex].level == vInfo[sourceVertex].level)
+            if (!vInfo[sourceVertex].evaluated || vInfo[sourceVertex].level >= vInfo[currentVertex].level)
                 continue;
 
             // the source has been evaluated and as such we can use it
@@ -306,6 +308,15 @@ void TransformGraph::save(const std::string& filename)
     auto edgeInfo   = boost::get(edgeInfo_t(), m_graph);
 
     boost::write_graphviz(file, m_graph, boost::make_label_writer(vertexInfo), boost::make_label_writer(edgeInfo));
+}
+
+void TransformGraph::clearEvalFlag()
+{
+    auto vInfo = boost::get(vertexInfo_t(), m_graph);
+
+    for (const auto& keyval : m_labeledVertex)
+        if (keyval.first != "world")
+            vInfo[keyval.second].evaluated = false;
 }
 
 ////////////////////////////////////////////////////
