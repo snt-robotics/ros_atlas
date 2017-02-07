@@ -39,10 +39,11 @@ private:
     Eigen::MatrixXd m_I; // identity
     Eigen::MatrixXd m_Q; // process covariance
     Eigen::MatrixXd m_R; // measurements covariance
-    Eigen::MatrixXd m_P; // state covariance
+    Eigen::MatrixXd m_Ppre; // state covariance
+    Eigen::MatrixXd m_Ppost; // state covariance
     Eigen::VectorXd m_x; // state space
     FunctionHandle m_f; // f(x) (state)
     FunctionHandle m_h; // h(x) (sensor)
     FunctionHandle m_F; // Jacobian (state)
-    FunctionHandle m_H; // Jacobian (state)
+    FunctionHandle m_H; // Jacobian (sensor)
 };

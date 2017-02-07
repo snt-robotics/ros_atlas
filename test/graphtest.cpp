@@ -100,7 +100,7 @@ TEST(Graphs, cycleTestEval)
     auto poseC = graph.lookupPose("C");
     ASSERT_TRUE(poseEq({ { 2, 0, 0 }, { 0, 0, 0, 1 } }, poseC));
 }
-
+#include <angles/angles.h>
 TEST(Graphs, expire)
 {
     TransformGraph graph;
@@ -131,4 +131,7 @@ TEST(Graphs, expectThrow)
 
     EXPECT_ANY_THROW(graph.lookupPose("A"));
     EXPECT_ANY_THROW(graph.lookupPose("B"));
+
+    auto q = tf2::Quaternion({ 0, 1, 0 }, angles::from_degrees(90 + 28)) * tf2::Quaternion({ 0, 0, 1 }, angles::from_degrees(270));
+    std::cout << q << std::endl;
 }

@@ -1,12 +1,16 @@
 #include "filters.h"
 
+/**
+ * @brief WeightedMean
+ */
+
 WeightedMean::WeightedMean()
 {
 }
 
 void WeightedMean::addVec3(const tf2::Vector3& vec, double weight)
 {
-    m_vectors += Eigen::Vector3d{ vec.x(), vec.y(), vec.z() } * weight;
+    m_vectorWeightedSum += Eigen::Vector3d{ vec.x(), vec.y(), vec.z() } * weight;
     m_vectorWeights += weight;
 }
 
@@ -22,11 +26,11 @@ void WeightedMean::addQuat(const tf2::Quaternion& quat, double weight)
     };
 }
 
-void WeightedMean::clear()
+void WeightedMean::reset()
 {
-    m_vectors       = { 0, 0, 0 };
-    m_vectorWeights = 0.0;
-    m_quats         = Eigen::Matrix4Xd();
+    m_vectorWeightedSum = { 0, 0, 0 };
+    m_vectorWeights     = 0.0;
+    m_quats             = Eigen::Matrix4Xd();
 }
 
 tf2::Vector3 WeightedMean::weightedMeanVec3() const
@@ -34,7 +38,7 @@ tf2::Vector3 WeightedMean::weightedMeanVec3() const
     if (m_vectorWeights == 0.0)
         return { 0, 0, 0 };
 
-    auto average = m_vectors / m_vectorWeights;
+    auto average = m_vectorWeightedSum / m_vectorWeights;
     return { average[0], average[1], average[2] };
 }
 
@@ -63,4 +67,74 @@ tf2::Quaternion WeightedMean::weightedMeanQuat() const
     // is the weighted average of the quaternion
     auto eigenvec = solver.eigenvectors().col(index);
     return { eigenvec[0], eigenvec[1], eigenvec[2], eigenvec[3] };
+}
+
+/**
+ * @brief ExplonentialMovingAverage
+ */
+
+ExplonentialMovingAverage::ExplonentialMovingAverage(double alpha)
+    : m_alpha(alpha)
+{
+}
+
+void ExplonentialMovingAverage::addScalar(double scalar)
+{
+    if (m_scalarInitialized)
+    {
+        m_scalarAccu = (m_alpha * scalar) + (1.0 - m_alpha) * m_scalarAccu;
+    }
+    else
+    {
+        m_scalarAccu        = scalar;
+        m_scalarInitialized = true;
+    }
+}
+
+void ExplonentialMovingAverage::addVec3(const tf2::Vector3& vec)
+{
+    if (m_vecInitialized)
+    {
+        m_vectorAccu = (m_alpha * vec) + (1.0 - m_alpha) * m_vectorAccu;
+    }
+    else
+    {
+        m_vectorAccu     = vec;
+        m_vecInitialized = true;
+    }
+}
+
+void ExplonentialMovingAverage::addQuat(const tf2::Quaternion& quat)
+{
+    if (m_quatInitialized)
+    {
+        m_quatAccu = m_quatAccu.slerp(quat, m_alpha);
+    }
+    else
+    {
+        m_quatAccu        = quat;
+        m_quatInitialized = true;
+    }
+}
+
+void ExplonentialMovingAverage::reset()
+{
+    m_scalarInitialized = false;
+    m_quatInitialized   = false;
+    m_vecInitialized    = false;
+}
+
+double ExplonentialMovingAverage::scalar() const
+{
+    return m_scalarAccu;
+}
+
+tf2::Vector3 ExplonentialMovingAverage::vec3() const
+{
+    return m_vectorAccu;
+}
+
+tf2::Quaternion ExplonentialMovingAverage::quat() const
+{
+    return m_quatAccu;
 }

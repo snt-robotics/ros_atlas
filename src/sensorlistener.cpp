@@ -116,7 +116,7 @@ void SensorListener::onSensorDataAvailable(const std::string& from, const std::s
 #include "helpers.h"
 Measurement SensorListener::calculateWeightedMean(const SensorDataList& data) const
 {
-    WeightedMean meanFilter;
+    ExplonentialMovingAverage filter(0.5);
 
     if (data.empty())
         return Measurement();
@@ -126,18 +126,15 @@ Measurement SensorListener::calculateWeightedMean(const SensorDataList& data) co
     // calculate the weighted sum
     for (const auto& sensorData : data)
     {
-        const double weight = std::max(0.01, sensorData.sigma);
-
-        meanFilter.addVec3(sensorData.transform.getOrigin(), weight);
-        meanFilter.addQuat(sensorData.transform.getRotation(), weight);
+        filter.addVec3(sensorData.transform.getOrigin());
+        filter.addQuat(sensorData.transform.getRotation());
+        filter.addScalar(sensorData.sigma);
     }
 
-    if (hasNanValues(meanFilter.weightedMeanVec3()))
-        int c = 0;
-
     // calculate the weighted average
-    filteredData.transform.setOrigin(meanFilter.weightedMeanVec3());
-    filteredData.transform.setRotation(meanFilter.weightedMeanQuat());
+    filteredData.transform.setOrigin(filter.vec3());
+    filteredData.transform.setRotation(filter.quat());
+    filteredData.sigma = filter.scalar();
 
     return filteredData;
 }

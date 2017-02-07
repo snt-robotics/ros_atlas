@@ -17,10 +17,12 @@ KalmanFilter::KalmanFilter(int numberOfStates, int numberOfObservations, double 
     m_R *= r * r;
 
     // initialize process covariance
-    m_P.setIdentity(numberOfStates, numberOfStates);
+    m_Ppost.setIdentity(numberOfStates, numberOfStates);
+    m_Ppost *= 0.1;
 
     // initialize state vector
     m_x.resize(numberOfStates);
+    m_x.setZero();
 
     // initialize identity
     m_I.setIdentity(numberOfStates, numberOfStates);
@@ -42,11 +44,17 @@ KalmanFilter::KalmanFilter(int numberOfStates, int numberOfObservations, double 
 void KalmanFilter::update(Eigen::VectorXd z)
 {
     auto F = m_F(m_x);
-    auto H = m_H(z);
-    m_P    = F * m_P * F.transpose() + m_Q;
-    auto G = (m_P * H.transpose() * (H * m_P * H.transpose() + m_R).inverse()).eval();
-    m_x    = m_x + G * (z - m_h(m_x)).transpose();
-    m_P    = (m_I - G * H) * m_P;
+    auto H = m_H(m_x);
+
+    // predict
+    m_x    = m_f(m_x);
+    m_Ppre = F * m_Ppost * F.transpose() + m_Q;
+
+    // update
+    auto G = (m_Ppre * H.transpose() * (H * m_Ppre * H.transpose() + m_R).inverse()).eval();
+
+    m_x += G * (m_h(z) - m_h(m_x));
+    m_Ppost = (m_I - G * H) * m_Ppre;
 }
 
 Eigen::VectorXd KalmanFilter::stateVector() const

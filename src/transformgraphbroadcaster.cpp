@@ -40,7 +40,7 @@ void TransformGraphBroadcaster::broadcast(const TransformGraph& graph, bool publ
             {
                 // show the sensors attached to that entity
                 for (const auto& sensor : m_entitySensors[entityName])
-                    broadcast(entityName, sensor.name, sensor.transf);
+                    broadcast(entityName, entityName + "-" + sensor.name, sensor.transf);
             }
         }
         catch (const std::string&)

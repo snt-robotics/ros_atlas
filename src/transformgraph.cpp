@@ -270,7 +270,7 @@ void TransformGraph::eval()
         vInfo[currentVertex].pose.rot = vInfo[currentVertex].filter.weightedMeanQuat();
 
         vInfo[currentVertex].evaluated = true;
-        vInfo[currentVertex].filter.clear();
+        vInfo[currentVertex].filter.reset();
     }
 }
 
