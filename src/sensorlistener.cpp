@@ -98,20 +98,17 @@ SensorListener::SensorListener(const Config& config)
 
 void SensorListener::onSensorDataAvailable(const std::string& from, const std::string& sensor, const tf2::Transform& sensorTransform, const atlas::MarkerData& markerMsg)
 {
-    // store the transformation of the marker in the sensor frame
+    // store the transformation of the marker in the sensor space
     tf2::Transform markerTransf;
     markerTransf.setOrigin({ markerMsg.pos.x, markerMsg.pos.y, markerMsg.pos.z });
     markerTransf.setRotation({ markerMsg.rot.x, markerMsg.rot.y, markerMsg.rot.z, markerMsg.rot.w });
 
-    // do the transformation from the marker pose to the base of the entity it is attached to
-    markerTransf *= m_markers[markerMsg.id].transf;
-
-    // do the transformation from base of the marker to the base of the entity the sensor is attached to
-    markerTransf *= sensorTransform;
+    // calculate the transform
+    tf2::Transform transf = m_markers[markerMsg.id].transf.inverse() * sensorTransform * markerTransf;
 
     // store it as raw data that needs filtering
     Measurement measurement;
-    measurement.transform  = markerTransf;
+    measurement.transform  = transf;
     measurement.stamp      = ros::Time::now();
     measurement.sigma      = markerMsg.sigma;
     measurement.key.from   = from;

@@ -277,7 +277,7 @@ void TransformGraph::eval()
             auto vertextransform = tf2::Transform{ vInfo[sourceVertex].pose.rot, vInfo[sourceVertex].pose.pos };
             auto edgetransform   = eInfo[edge].sensorData.transform;
 
-            auto result = edgetransform * vertextransform;
+            auto result = vertextransform * edgetransform;
 
             // the standard deviation
             const auto sigma = eInfo[edge].sensorData.sigma;
