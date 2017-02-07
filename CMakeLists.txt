@@ -211,6 +211,7 @@ catkin_add_gtest(${PROJECT_NAME}-test
     test/graphtest.cpp
     test/kalman.cpp
     test/helpers.cpp
+    test/main.cpp
 
     ${SRC_FILES}
 )
