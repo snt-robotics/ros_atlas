@@ -22,7 +22,7 @@ const std::string yamlInput = "entities:\n"
                               "    ref: 'world'\n"
                               "    transform:\n"
                               "      origin: [1, 0, 0]\n"
-                              "      rot: [0, 0, 0, 1]\n"
+                              "      rot: [0, 1, 0, 1]\n"
                               "\n"
                               "  - marker:\n"
                               "    id: 4\n"
@@ -76,7 +76,7 @@ TEST(Config, transform)
 
     tf2::Transform transf;
     transf.setOrigin({ 1, 0, 0 });
-    transf.setRotation({ 0, 0, 0, 1 });
+    transf.setRotation({ 0, 1, 0, 1 });
 
     ASSERT_EQ(1, config.markers()[0].id);
     ASSERT_TRUE(transfEq(transf, config.markers()[0].transf));

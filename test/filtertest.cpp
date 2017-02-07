@@ -55,7 +55,7 @@ TEST(Filters, zeroWeight)
 
 TEST(Filters, expMovingAverage)
 {
-    ExplonentialMovingAverage filter(0.5);
+    ExplonentialMovingAverageFilter filter(0.5);
 
     // the filter is not initialized yet
     // we expect it to return {1,1,1}

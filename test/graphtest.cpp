@@ -1,3 +1,4 @@
+#include <angles/angles.h>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 #include <boost/graph/graph_traits.hpp>
@@ -96,11 +97,31 @@ TEST(Graphs, cycleTestEval)
     graph.eval();
     graph.save("atlas/Testing/graphcycleEval.dot");
 
-    // check the pose of C
-    auto poseC = graph.lookupPose("C");
-    ASSERT_TRUE(poseEq({ { 2, 0, 0 }, { 0, 0, 0, 1 } }, poseC));
+    // check poses
+    ASSERT_TRUE(poseEq({ { 1, 1, 0 }, { 0, 0, 0, 1 } }, graph.lookupPose("A")));
+    ASSERT_TRUE(poseEq({ { 1, -1, 0 }, { 0, 0, 0, 1 } }, graph.lookupPose("B")));
+    ASSERT_TRUE(poseEq({ { 2, 0, 0 }, { 0, 0, 0, 1 } }, graph.lookupPose("C")));
 }
-#include <angles/angles.h>
+
+TEST(Graphs, sigmaTest)
+{
+    TransformGraph graph;
+    graph.addEntity("A");
+    graph.addEntity("B");
+    graph.addEntity("C");
+
+    // the first sensor is really good compared to the second
+    // we expect the result to be almost equal to the position
+    // detected by the first sensor.
+    graph.updateSensorData({ { "world", "A", "optitrack", -1 }, { 1, 1, 0 }, 0.000001 });
+    graph.updateSensorData({ { "world", "B", "optitrack", -2 }, { 1, -1, 0 }, 1.0 });
+
+    graph.eval();
+
+    // check poses
+    ASSERT_TRUE(poseEq({ { 1, 1, 0 }, { 0, 0, 0, 1 } }, graph.lookupPose("A")));
+}
+
 TEST(Graphs, expire)
 {
     TransformGraph graph;

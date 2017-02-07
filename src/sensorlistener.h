@@ -1,6 +1,7 @@
 #pragma once
 
 #include "config.h"
+#include "filters.h"
 #include <atlas/MarkerData.h>
 #include <ros/ros.h>
 #include <tf2/LinearMath/Transform.h>
@@ -44,11 +45,13 @@ struct Measurement
      * @param sensorId: The sensor the data is coming from
      * @param pos: The position of the entity
      * @param rot: The rotation of the entity
+     * @param sigma: The standard deviation
      */
-    Measurement(const Key& key, const tf2::Vector3& pos, const tf2::Quaternion& rot)
+    Measurement(const Key& key, const tf2::Vector3& pos, const tf2::Quaternion& rot, double sigma = 1.0)
         : transform(rot, pos)
         , stamp(ros::Time::now())
         , key(key)
+        , sigma(sigma)
     {
     }
 
@@ -56,11 +59,13 @@ struct Measurement
      * @brief SensorData
      * @param sensorId: The sensor the data is coming from
      * @param pos: The position of the entity
+     * @param sigma: The standard deviation
      */
-    Measurement(const Key& key, const tf2::Vector3& pos)
+    Measurement(const Key& key, const tf2::Vector3& pos, double sigma = 1.0)
         : transform(tf2::Quaternion::getIdentity(), pos)
         , stamp(ros::Time::now())
         , key(key)
+        , sigma(sigma)
     {
     }
 
@@ -80,18 +85,18 @@ struct Measurement
     /// The pose of the entity
     tf2::Transform transform;
 
-    /// The standard deviation
-    double sigma = 1.0;
-
     /// The time this data was recorded
     ros::Time stamp;
 
     /// The unique identifier for this measurement
     Key key;
+
+    /// The standard deviation
+    double sigma = 1.0;
 };
 
 using SensorDataList        = std::vector<Measurement>;
-using SensorDataMap         = std::map<Measurement::Key, std::vector<Measurement> >;
+using SensorDataMap         = std::map<Measurement::Key, ExplonentialMovingAverageFilter>;
 using FilteredSensorDataMap = std::map<std::string, std::map<int, Measurement> >;
 
 /**
@@ -129,9 +134,6 @@ public:
      * @param markerMsg: The marker message
      */
     void onSensorDataAvailable(const std::string& from, const std::string& sensor, const tf2::Transform& sensorTransform, const atlas::MarkerData& markerMsg);
-
-protected:
-    Measurement calculateWeightedMean(const SensorDataList& data) const;
 
 private:
     ros::NodeHandle m_node;

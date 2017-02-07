@@ -53,7 +53,7 @@ class TransformGraph
         Pose pose;
 
         //
-        WeightedMean filter;
+        WeightedMean filter; // filter used to fuse the sensor data
         bool evaluated = false;
         int level      = 0;
 
@@ -82,6 +82,7 @@ class TransformGraph
     using Graph             = boost::adjacency_list<boost::multisetS, boost::listS, boost::bidirectionalS, VertexProp, EdgeProp, boost::multisetS>;
     using Vertex            = boost::graph_traits<Graph>::vertex_descriptor;
     using Edge              = boost::graph_traits<Graph>::edge_descriptor;
+    using InEdgeIterator    = boost::graph_traits<Graph>::in_edge_iterator;
     using VertexIterator    = boost::graph_traits<Graph>::vertex_iterator;
 
     /**

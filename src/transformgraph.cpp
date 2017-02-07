@@ -176,6 +176,8 @@ tf2::Transform TransformGraph::lookupTransform(const std::string& from, const st
 
     if (path.empty())
         return tf2::Transform(); //failed to lookup transform
+
+    return tf2::Transform();
 }
 
 bool TransformGraph::canTransform(const std::string& from, const std::string& to)
@@ -242,6 +244,13 @@ void TransformGraph::eval()
     {
         auto itrs = boost::in_edges(currentVertex, m_graph);
 
+        // find smallest sigma (i.e. the "best" sensor)
+        // used to calculate the weight
+        auto minItr = std::min_element(itrs.first, itrs.second, [&eInfo](Edge a, Edge b) {
+            return eInfo[a].sensorData.sigma < eInfo[b].sensorData.sigma;
+        });
+        const double minSigma = eInfo[*minItr].sensorData.sigma;
+
         for (auto edge : boost::make_iterator_range(itrs.first, itrs.second))
         {
             // get the source vertex of that edge
@@ -262,8 +271,15 @@ void TransformGraph::eval()
 
             auto result = edgetransform * vertextransform;
 
-            vInfo[currentVertex].filter.addVec3(result.getOrigin(), 1.0);
-            vInfo[currentVertex].filter.addQuat(result.getRotation(), 1.0);
+            // the standard deviation
+            const auto sigma = eInfo[edge].sensorData.sigma;
+
+            // the weight. Lower sigmas are weighted higher.
+            const auto weight = minSigma / sigma;
+
+            // filter
+            vInfo[currentVertex].filter.addVec3(result.getOrigin(), weight);
+            vInfo[currentVertex].filter.addQuat(result.getRotation(), weight);
         }
 
         vInfo[currentVertex].pose.pos = vInfo[currentVertex].filter.weightedMeanVec3();

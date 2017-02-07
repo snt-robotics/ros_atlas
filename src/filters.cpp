@@ -73,12 +73,16 @@ tf2::Quaternion WeightedMean::weightedMeanQuat() const
  * @brief ExplonentialMovingAverage
  */
 
-ExplonentialMovingAverage::ExplonentialMovingAverage(double alpha)
+ExplonentialMovingAverageFilter::ExplonentialMovingAverageFilter()
+{
+}
+
+ExplonentialMovingAverageFilter::ExplonentialMovingAverageFilter(double alpha)
     : m_alpha(alpha)
 {
 }
 
-void ExplonentialMovingAverage::addScalar(double scalar)
+void ExplonentialMovingAverageFilter::addScalar(double scalar)
 {
     if (m_scalarInitialized)
     {
@@ -89,9 +93,11 @@ void ExplonentialMovingAverage::addScalar(double scalar)
         m_scalarAccu        = scalar;
         m_scalarInitialized = true;
     }
+
+    m_timeOfLastValue = ros::Time::now();
 }
 
-void ExplonentialMovingAverage::addVec3(const tf2::Vector3& vec)
+void ExplonentialMovingAverageFilter::addVec3(const tf2::Vector3& vec)
 {
     if (m_vecInitialized)
     {
@@ -102,9 +108,11 @@ void ExplonentialMovingAverage::addVec3(const tf2::Vector3& vec)
         m_vectorAccu     = vec;
         m_vecInitialized = true;
     }
+
+    m_timeOfLastValue = ros::Time::now();
 }
 
-void ExplonentialMovingAverage::addQuat(const tf2::Quaternion& quat)
+void ExplonentialMovingAverageFilter::addQuat(const tf2::Quaternion& quat)
 {
     if (m_quatInitialized)
     {
@@ -115,26 +123,33 @@ void ExplonentialMovingAverage::addQuat(const tf2::Quaternion& quat)
         m_quatAccu        = quat;
         m_quatInitialized = true;
     }
+
+    m_timeOfLastValue = ros::Time::now();
 }
 
-void ExplonentialMovingAverage::reset()
+void ExplonentialMovingAverageFilter::reset()
 {
     m_scalarInitialized = false;
     m_quatInitialized   = false;
     m_vecInitialized    = false;
 }
 
-double ExplonentialMovingAverage::scalar() const
+double ExplonentialMovingAverageFilter::scalar() const
 {
     return m_scalarAccu;
 }
 
-tf2::Vector3 ExplonentialMovingAverage::vec3() const
+tf2::Vector3 ExplonentialMovingAverageFilter::vec3() const
 {
     return m_vectorAccu;
 }
 
-tf2::Quaternion ExplonentialMovingAverage::quat() const
+tf2::Quaternion ExplonentialMovingAverageFilter::quat() const
 {
     return m_quatAccu;
+}
+
+ros::Time ExplonentialMovingAverageFilter::timeOfLastValue() const
+{
+    return m_timeOfLastValue;
 }

@@ -1,5 +1,6 @@
 #include "sensorlistener.h"
 #include "filters.h"
+#include "helpers.h"
 
 #include <boost/function.hpp>
 #include <geometry_msgs/PoseStamped.h>
@@ -111,32 +112,15 @@ void SensorListener::onSensorDataAvailable(const std::string& from, const std::s
     measurement.key.sensor = sensor;
     measurement.key.marker = markerMsg.id;
 
-    m_rawSensorData[measurement.key].push_back(measurement);
-}
-#include "helpers.h"
-Measurement SensorListener::calculateWeightedMean(const SensorDataList& data) const
-{
-    ExplonentialMovingAverage filter(0.5);
+    // filter
+    // check if filter needs reset due to too old data
+    if (ros::Time::now() - m_rawSensorData[measurement.key].timeOfLastValue() > ros::Duration(1))
+        m_rawSensorData[measurement.key].reset();
 
-    if (data.empty())
-        return Measurement();
-
-    Measurement filteredData = data.front();
-
-    // calculate the weighted sum
-    for (const auto& sensorData : data)
-    {
-        filter.addVec3(sensorData.transform.getOrigin());
-        filter.addQuat(sensorData.transform.getRotation());
-        filter.addScalar(sensorData.sigma);
-    }
-
-    // calculate the weighted average
-    filteredData.transform.setOrigin(filter.vec3());
-    filteredData.transform.setRotation(filter.quat());
-    filteredData.sigma = filter.scalar();
-
-    return filteredData;
+    // add the new data to the filter
+    m_rawSensorData[measurement.key].addQuat(measurement.transform.getRotation());
+    m_rawSensorData[measurement.key].addVec3(measurement.transform.getOrigin());
+    m_rawSensorData[measurement.key].addScalar(measurement.sigma);
 }
 
 SensorDataList SensorListener::filteredSensorData() const
@@ -146,8 +130,14 @@ SensorDataList SensorListener::filteredSensorData() const
     // calculate a weighted average over the sensor data
     for (const auto& keyval : m_rawSensorData)
     {
-        const auto& measurements = keyval.second;
-        filteredSensorData.push_back(calculateWeightedMean(measurements));
+        const auto& filter = keyval.second;
+
+        Measurement filteredData;
+        filteredData.transform.setOrigin(filter.vec3());
+        filteredData.transform.setRotation(filter.quat());
+        filteredData.sigma = filter.scalar();
+
+        filteredSensorData.push_back(filteredData);
     }
 
     return filteredSensorData;

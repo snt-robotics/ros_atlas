@@ -83,10 +83,13 @@ bool poseEq(const Pose& a, const Pose& b)
     return test;
 }
 
+// =====================
 // GTest main
+// =====================
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "atlas_test", ros::init_options::NoRosout);
+    ros::start();
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
