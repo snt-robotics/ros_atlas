@@ -31,6 +31,7 @@ SensorListener::SensorListener(const Config& config)
 
             // tell ros we want to listen to that topic
             m_subscribers.push_back(m_node.subscribe<SensorCallback>(sensor.topic, 1000, callbackSensor));
+            ROS_INFO("Suscribed to topic \"%s\"", sensor.topic.c_str());
         }
     }
 
@@ -49,6 +50,10 @@ SensorListener::SensorListener(const Config& config)
             // callback lambda function
             // provides aditional values to the callback like the name of the reference frame
             boost::function<SensorCallback> callbackSensor = [this, sensorName, id, sigma](const geometry_msgs::PoseStampedConstPtr data) {
+
+                // This marker does not exist.
+                // Its sole purpose is to map the sensor
+                // readings to an entity.
                 atlas::MarkerData fakeData;
                 fakeData.pos   = data->pose.position;
                 fakeData.rot   = data->pose.orientation;
@@ -60,6 +65,7 @@ SensorListener::SensorListener(const Config& config)
 
             // tell ros we want to listen to that topic
             m_subscribers.push_back(m_node.subscribe<SensorCallback>(sensor.topic, 1000, callbackSensor));
+            ROS_INFO("Suscribed to topic \"%s\"", sensor.topic.c_str());
         }
         else // marker based callback
         {
@@ -78,6 +84,7 @@ SensorListener::SensorListener(const Config& config)
 
             // tell ros we want to listen to that topic
             m_subscribers.push_back(m_node.subscribe<SensorCallback>(sensor.topic, 1000, callbackSensor));
+            ROS_INFO("Suscribed to topic \"%s\"", sensor.topic.c_str());
         }
     }
 
@@ -133,6 +140,8 @@ SensorDataList SensorListener::filteredSensorData() const
         const auto& filter = keyval.second;
 
         Measurement filteredData;
+        filteredData.key   = keyval.first;
+        filteredData.stamp = ros::Time::now();
         filteredData.transform.setOrigin(filter.vec3());
         filteredData.transform.setRotation(filter.quat());
         filteredData.sigma = filter.scalar();
