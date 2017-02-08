@@ -135,7 +135,6 @@ include_directories(
 
 SET(SRC_FILES
    src/config.cpp
-   src/markertracker.cpp
    src/rvizhelpers.cpp
    src/csvlogger.cpp
    src/sensorlistener.cpp
