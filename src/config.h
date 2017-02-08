@@ -66,6 +66,20 @@ struct Marker
     tf2::Transform transf;
 };
 
+/**
+ * @brief The Options struct
+ */
+struct Options
+{
+    std::string dbgGraphFilename; ///< The file to save the graph to
+    double dbgGraphInterval   = 0.0; ///< The graph saving interval in seconds
+    double loopRate           = 60.0; ///< Loop rate of the node in Hz
+    double decayDuration      = 0.25; ///< Decay time of the graph's edges in seconds
+    bool publishMarkers       = true; ///< Publishes the markers via the ros tf system
+    bool publishWorldSensors  = true; ///< Publishes the world sensors via the ros tf system
+    bool publishEntitySensors = true; ///< Publishes the entity sensors via the ros tf system
+};
+
 class Config
 {
 public:
@@ -103,6 +117,12 @@ public:
     std::vector<WorldSensor> worldSensors() const;
 
     /**
+     * @brief options
+     * @return the options as specified in the config file
+     */
+    Options options() const;
+
+    /**
      * @brief dump prints the current configuration
      */
     void dump() const;
@@ -121,4 +141,5 @@ private:
     std::vector<Entity> m_entities;
     std::vector<Marker> m_markers;
     std::vector<WorldSensor> m_worldSensors;
+    Options m_options;
 };

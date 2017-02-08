@@ -135,7 +135,7 @@ public:
     /**
      * @brief TransformGraph creates an empty graph only containing a "world" entity
      */
-    TransformGraph();
+    TransformGraph(double decayDuration = 0.25);
 
     /**
      * @brief TransformGraph creates an empty graph only containing a "world" entity
@@ -172,9 +172,8 @@ public:
     /**
      * @brief update updates from a sensor listener and removes expired edges, also evaluates the graph
      * @param listener: Used to update the graph
-     * @param duration: Edges older than duration are removed
      */
-    void update(const SensorListener& listener, ros::Duration duration);
+    void update(const SensorListener& listener);
 
     /**
      * @brief removeAllEdges removes all sensor data assigned to a given entity
@@ -241,4 +240,7 @@ private:
 
     // used to assign unique IDs to vertices
     int m_count = 0;
+
+    // decay duration i.e. the time after which edges with no activity are removed
+    ros::Duration m_decayDuration = ros::Duration(0.25);
 };

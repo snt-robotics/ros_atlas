@@ -3,7 +3,8 @@
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 #include <boost/graph/graphviz.hpp>
 
-TransformGraph::TransformGraph()
+TransformGraph::TransformGraph(double decayDuration)
+    : m_decayDuration(decayDuration)
 {
     // world is a special entity
     addEntity("world");
@@ -14,7 +15,7 @@ TransformGraph::TransformGraph()
 }
 
 TransformGraph::TransformGraph(const Config& config)
-    : TransformGraph()
+    : TransformGraph(config.options().decayDuration)
 {
     for (const auto& entity : config.entities())
         addEntity(entity.name);
@@ -72,14 +73,14 @@ void TransformGraph::updateSensorData(const Measurement& measurement)
     }
 }
 
-void TransformGraph::update(const SensorListener& listener, ros::Duration duration)
+void TransformGraph::update(const SensorListener& listener)
 {
     auto measurements = listener.filteredSensorData();
 
     for (const auto& measurement : measurements)
         updateSensorData(measurement);
 
-    removeEdgesOlderThan(duration);
+    removeEdgesOlderThan(m_decayDuration);
 
     clearEvalFlag();
     eval();

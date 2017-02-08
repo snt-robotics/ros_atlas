@@ -12,9 +12,13 @@ TransformGraphBroadcaster::TransformGraphBroadcaster(const Config& config)
         m_entitySensors[entity.name] = entity.sensors;
 
     m_worldSensors = config.worldSensors();
+
+    m_publishWorldSensors  = config.options().publishWorldSensors;
+    m_publishEntitySensors = config.options().publishEntitySensors;
+    m_publishMarkers       = config.options().publishMarkers;
 }
 
-void TransformGraphBroadcaster::broadcast(const TransformGraph& graph, bool publishMarkers, bool publishEntitySensors, bool publishWorldSensors)
+void TransformGraphBroadcaster::broadcast(const TransformGraph& graph)
 {
     auto entityNames = graph.entities();
     for (const auto& entityName : entityNames)
@@ -29,14 +33,14 @@ void TransformGraphBroadcaster::broadcast(const TransformGraph& graph, bool publ
             if (entityName != "world")
                 broadcast("world", entityName, pose);
 
-            if (publishMarkers)
+            if (m_publishMarkers)
             {
                 // show the markers attached to that entity
                 for (const auto& marker : m_markers[entityName])
                     broadcast(entityName, "Marker " + std::to_string(marker.id), marker.transf);
             }
 
-            if (publishEntitySensors)
+            if (m_publishEntitySensors)
             {
                 // show the sensors attached to that entity
                 for (const auto& sensor : m_entitySensors[entityName])
@@ -49,7 +53,7 @@ void TransformGraphBroadcaster::broadcast(const TransformGraph& graph, bool publ
         }
     }
 
-    if (publishWorldSensors)
+    if (m_publishWorldSensors)
     {
         for (const auto& sensor : m_worldSensors)
             broadcast("world", sensor.name, sensor.transf);

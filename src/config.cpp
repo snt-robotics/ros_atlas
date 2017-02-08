@@ -146,6 +146,38 @@ void Config::parseRoot(const YAML::Node& node)
             m_worldSensors.push_back(worldSensor);
         }
     }
+
+    // load the options
+    const auto options = node["options"];
+
+    if (options)
+    {
+        if (options["dbgDumpGraphFilename"])
+            m_options.dbgGraphFilename = options["dbgDumpGraphFilename"].as<std::string>();
+
+        if (options["dbgDumpGraphInterval"])
+            m_options.dbgGraphInterval = options["dbgDumpGraphInterval"].as<double>();
+
+        if (options["loopRate"])
+            m_options.loopRate = options["loopRate"].as<double>();
+
+        if (options["decayDuration"])
+            m_options.decayDuration = options["decayDuration"].as<double>();
+
+        if (options["publishMarkers"])
+            m_options.publishMarkers = options["publishMarkers"].as<bool>();
+
+        if (options["publishWorldSensors"])
+            m_options.publishWorldSensors = options["publishWorldSensors"].as<bool>();
+
+        if (options["publishEntitySensors"])
+            m_options.publishEntitySensors = options["publishEntitySensors"].as<bool>();
+    }
+}
+
+Options Config::options() const
+{
+    return m_options;
 }
 
 std::vector<WorldSensor> Config::worldSensors() const
@@ -166,6 +198,16 @@ std::vector<Entity> Config::entities() const
 void Config::dump() const
 {
     std::cout << "\n=== CONFIG ===\n";
+
+    std::cout << "Options:\n";
+    std::cout << "  loopRate: " << m_options.loopRate << "\n";
+    std::cout << "  decayDuration: " << m_options.decayDuration << "\n";
+    std::cout << "  dbgGraphFilename: " << m_options.dbgGraphFilename << "\n";
+    std::cout << "  dbgGraphInterval: " << m_options.dbgGraphInterval << "\n";
+    std::cout << "  publishMarkers: " << m_options.publishMarkers << "\n";
+    std::cout << "  publishWorldSensors: " << m_options.publishWorldSensors << "\n";
+    std::cout << "  publishEntitySensors: " << m_options.publishEntitySensors << "\n";
+
     std::cout << "Entities:\n";
     for (const auto& entity : m_entities)
     {
