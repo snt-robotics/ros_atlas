@@ -63,7 +63,7 @@ void TransformGraph::updateSensorData(const Measurement& measurement)
     if (hasEntity(measurement.key.from) && hasEntity(measurement.key.to))
     {
         boost::add_edge(m_labeledVertex[measurement.key.from], m_labeledVertex[measurement.key.to], { 1.0, info }, m_graph);
-        boost::add_edge(m_labeledVertex[measurement.key.to], m_labeledVertex[measurement.key.from], { 1.0, info }, m_graph);
+        boost::add_edge(m_labeledVertex[measurement.key.to], m_labeledVertex[measurement.key.from], { 1.0, info.inverse() }, m_graph);
     }
     else
     {
@@ -262,7 +262,7 @@ void TransformGraph::eval()
         for (auto edge : boost::make_iterator_range(itrs.first, itrs.second))
         {
             // get the source vertex of that edge
-            auto sourceVertex = edge.m_source;
+            const auto sourceVertex = edge.m_source;
 
             // if the source hasn't been evaluated yet, we just skip it
             // as it is of no value to us
@@ -274,10 +274,10 @@ void TransformGraph::eval()
             // for the pose calculation
             // The edges contain the transformation
             // The vertices contain the pose
-            auto vertextransform = tf2::Transform{ vInfo[sourceVertex].pose.rot, vInfo[sourceVertex].pose.pos };
-            auto edgetransform   = eInfo[edge].sensorData.transform;
+            const auto vertextransform = tf2::Transform{ vInfo[sourceVertex].pose.rot, vInfo[sourceVertex].pose.pos };
+            const auto edgetransform   = eInfo[edge].sensorData.transform;
 
-            auto result = vertextransform * edgetransform;
+            const auto result = vertextransform * edgetransform;
 
             // the standard deviation
             const auto sigma = eInfo[edge].sensorData.sigma;
@@ -323,6 +323,7 @@ void TransformGraph::clearEvalFlag()
 // print helpers
 ////////////////////////////////////////////////////
 
+// The following information is displayed on edges
 std::ostream& operator<<(std::ostream& os, const TransformGraph::EdgeInfo& info)
 {
     return os << "source: " << info.sensorData.key.from << '\n'
@@ -330,6 +331,7 @@ std::ostream& operator<<(std::ostream& os, const TransformGraph::EdgeInfo& info)
               << "marker: " << info.sensorData.key.marker;
 }
 
+// The following information is displayed on vertices
 std::ostream& operator<<(std::ostream& os, const TransformGraph::VertexInfo& info)
 {
     return os << "Name: " << info.name << '\n'
