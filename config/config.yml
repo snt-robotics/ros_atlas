@@ -1,10 +1,26 @@
+options:
+  # node settings
+  loopRate: 60.0 # Hz
+
+  # graph settings
+  decayDuration: 0.25 # seconds
+
+  # transform publisher settings
+  publishMarkers: true
+  publishWorldSensors: true
+  publishEntitySensors: true
+
+  # debug
+  dbgDumpGraphInterval: 5.0 # seconds
+  dbgDumpGraphFilename: '/home/paul/dbgGraph.dot'
+
 entities:
   - entity:
     name: 'ardrone0'
     sensors:
       - sensor:
         name: 'fontcam'
-        topic: 'aruco/ardrone0/etc'
+        topic: '/aruco_tracker/ardrone0_frontcam/detected_markers'
         transform:
           origin: [0.185, 0, -0.03]
           rot: [0.606109, -0.606109, 0.364187, -0.364187]
@@ -14,24 +30,22 @@ entities:
     sensors:
     - sensor:
       name: 'fontcam'
-      topic: 'aruco/ardrone1/etc'
+      topic: '/aruco_tracker/ardrone1_frontcam/detected_markers'
       transform:
         origin: [0.185, 0, -0.03]
-        rot: [0, 2.05949, 4.71239]
+        rot: [0.606109, -0.606109, 0.364187, -0.364187]
+
+  # This entity is used to detect the position of marker 0
+  # It has no physical meaning
+  - entity:
+    name: 'Marker0Wrapper'
 
 markers:
   - marker:
-    id: 1
-    ref: 'world'
+    id: 0
+    ref: 'Marker0Wrapper'
     transform:
-      origin: [-0.00452, -0.05223, 0.0089]
-      rot: [0, 0, 0, 1]
-
-  - marker:
-    id: 4
-    ref: 'ardrone1'
-    transform:
-      origin: [0, -0.25, 0]
+      origin: [0, 0, 0]
       rot: [0, 0, 0, 1]
 
 world:
@@ -40,11 +54,11 @@ world:
     type: 'Global'
     topic: '/Ardrone2SimpleLinModel_HASHMARK_0/pose'
     entity: 'ardrone0'
-    sigma: 0.5
+    sigma: 0.1
 
   - sensor:
     name: 'optitrack1'
     type: 'Global'
     topic: '/Ardrone2SimpleLinModel_HASHMARK_1/pose'
     entity: 'ardrone1'
-    sigma: 0.5
+    sigma: 0.1

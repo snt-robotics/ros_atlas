@@ -1,0 +1,32 @@
+entities:
+  - entity:
+    name: 'ardrone0'
+    sensors:
+      - sensor:
+        name: 'fontcam'
+        topic: '/aruco_tracker/ardrone0_frontcam/detected_markers'
+        transform:
+          origin: [0.185, 0, -0.03]
+          rot: [0.606109, -0.606109, 0.364187, -0.364187]
+
+  - entity:
+    name: 'ardrone1'
+    sensors:
+    - sensor:
+      name: 'fontcam'
+      topic: '/aruco_tracker/ardrone1_frontcam/detected_markers'
+      transform:
+        origin: [0.185, 0, -0.03]
+        rot: [0.606109, -0.606109, 0.364187, -0.364187]
+
+
+markers:
+  # This markers position is known in world coordinates
+  # We use it to estimate the pose of the drones
+  - marker:
+    id: 0
+    ref: 'world'
+    transform:
+      origin: [-0.00452, -0.05223, 0.0089]
+      rot: [-90,180,0] # YPR notation (in degrees)
+      #rot: [0,0,0]
