@@ -1,5 +1,6 @@
 #include "config.h"
 
+#include <angles/angles.h>
 #include <ros/ros.h>
 #include <yaml-cpp/yaml.h>
 
@@ -35,7 +36,11 @@ tf2::Transform Config::parseTransform(const YAML::Node& node) const
     }
     else if (node["rot"].size() == 3)
     {
-        rot.setRPY(node["rot"][0].as<double>(), node["rot"][1].as<double>(), node["rot"][2].as<double>());
+        rot.setRPY( //
+            angles::from_degrees(node["rot"][0].as<double>()), //
+            angles::from_degrees(node["rot"][1].as<double>()), //
+            angles::from_degrees(node["rot"][2].as<double>()) //
+            );
     }
     else
     {

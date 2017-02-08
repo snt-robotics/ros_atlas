@@ -29,8 +29,8 @@ struct WorldSensor
     enum class Type
     {
         None, ///< unspecified
-        Global, ///< i.e. non marker based
-        Camera ///< Camera & markers
+        Global, ///< Non marker based (e.g. GPS)
+        Camera ///< Camera, marker based
     };
     std::string name;
     std::string entity;
