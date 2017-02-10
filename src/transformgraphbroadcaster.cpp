@@ -9,7 +9,11 @@ TransformGraphBroadcaster::TransformGraphBroadcaster(const Config& config)
         m_markers[marker.ref].push_back(marker);
 
     for (const auto& entity : config.entities())
+    {
         m_entitySensors[entity.name] = entity.sensors;
+        m_filters[entity.name].setTimeout(ros::Duration(0.25));
+        m_filters[entity.name].setAlpha(0.1);
+    }
 
     m_worldSensors = config.worldSensors();
 
@@ -28,6 +32,8 @@ void TransformGraphBroadcaster::broadcast(const TransformGraph& graph)
         {
             // this method throws if a lookup is not possible
             pose = graph.lookupPose(entityName);
+            m_filters[entityName].addPose(pose);
+            pose = m_filters[entityName].pose();
 
             // broadcast the entity's pose in world frame
             if (entityName != "world")

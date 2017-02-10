@@ -7,6 +7,8 @@
 
 #include <vector>
 
+#include "helpers.h"
+
 /**
  * @brief The WeightedMean class
  */
@@ -55,18 +57,91 @@ public:
     /**
      * @brief ExplonentialMovingAverage
      * @param alpha is the exponential factor. Lower alpha means slower filter (or higher time constant).
+     * @param timeout tells the filter to reinitialize after a given amount of time without data
      */
-    explicit ExplonentialMovingAverageFilter(double alpha);
+    explicit ExplonentialMovingAverageFilter(double alpha, ros::Duration timeout = ros::Duration(0));
 
+    /**
+     * @brief addScalar
+     * @param scalar: The scalar to filter
+     */
     void addScalar(double scalar);
+
+    /**
+     * @brief addVec3
+     * @param vec: The vector to filter
+     */
     void addVec3(const tf2::Vector3& vec);
+
+    /**
+     * @brief addQuat
+     * @param quat: The quaternion to filter
+     */
     void addQuat(const tf2::Quaternion& quat);
+
+    /**
+     * @brief addPose
+     * @param pose
+     */
+    void addPose(const Pose& pose);
+
+    /**
+     * @brief reset
+     * Resets the scalar, quaternion and vector of the filter
+     * They will be reinitialized once the filter receives new data
+     */
     void reset();
 
+    /**
+     * @brief scalar
+     * @return the scalar of the filter
+     */
     double scalar() const;
+
+    /**
+     * @brief vec3
+     * @return the vector of the filter
+     */
     tf2::Vector3 vec3() const;
+
+    /**
+     * @brief quat
+     * @return the quaternion of the filter
+     */
     tf2::Quaternion quat() const;
+
+    /**
+     * @brief pose
+     * @return the filtered pose
+     */
+    Pose pose() const;
+
+    /**
+     * @brief timeOfLastValue
+     * @return returns the time the filter received its last value
+     */
     ros::Time timeOfLastValue() const;
+
+    /**
+     * @brief setTimeout
+     * @param timeout tells the filter to reinitialize after a given amount of time without data
+     */
+    void setTimeout(const ros::Duration& timeout);
+
+    /**
+     * @brief alpha
+     * @return the exponential weighting factor
+     */
+    double alpha() const;
+
+    /**
+     * @brief setAlpha
+     * @param set the exponential weighting factor alpha of the filter
+     */
+    void setAlpha(double alpha);
+
+protected:
+    void checkReinit();
 
 private:
     double m_alpha = 0.05; // exponential constant
@@ -83,4 +158,5 @@ private:
     bool m_scalarInitialized = false;
     bool m_vecInitialized    = false;
     bool m_quatInitialized   = false;
+    ros::Duration m_timeout;
 };

@@ -77,13 +77,15 @@ ExplonentialMovingAverageFilter::ExplonentialMovingAverageFilter()
 {
 }
 
-ExplonentialMovingAverageFilter::ExplonentialMovingAverageFilter(double alpha)
+ExplonentialMovingAverageFilter::ExplonentialMovingAverageFilter(double alpha, ros::Duration timeout)
     : m_alpha(alpha)
+    , m_timeout(timeout)
 {
 }
 
 void ExplonentialMovingAverageFilter::addScalar(double scalar)
 {
+    checkReinit();
     if (m_scalarInitialized)
     {
         m_scalarAccu = (m_alpha * scalar) + (1.0 - m_alpha) * m_scalarAccu;
@@ -99,6 +101,7 @@ void ExplonentialMovingAverageFilter::addScalar(double scalar)
 
 void ExplonentialMovingAverageFilter::addVec3(const tf2::Vector3& vec)
 {
+    checkReinit();
     if (m_vecInitialized)
     {
         m_vectorAccu = (m_alpha * vec) + (1.0 - m_alpha) * m_vectorAccu;
@@ -114,6 +117,7 @@ void ExplonentialMovingAverageFilter::addVec3(const tf2::Vector3& vec)
 
 void ExplonentialMovingAverageFilter::addQuat(const tf2::Quaternion& quat)
 {
+    checkReinit();
     if (m_quatInitialized)
     {
         m_quatAccu = m_quatAccu.slerp(quat, m_alpha);
@@ -125,6 +129,12 @@ void ExplonentialMovingAverageFilter::addQuat(const tf2::Quaternion& quat)
     }
 
     m_timeOfLastValue = ros::Time::now();
+}
+
+void ExplonentialMovingAverageFilter::addPose(const Pose& pose)
+{
+    addVec3(pose.pos);
+    addQuat(pose.rot);
 }
 
 void ExplonentialMovingAverageFilter::reset()
@@ -149,7 +159,36 @@ tf2::Quaternion ExplonentialMovingAverageFilter::quat() const
     return m_quatAccu;
 }
 
+Pose ExplonentialMovingAverageFilter::pose() const
+{
+    return Pose(vec3(), quat());
+}
+
 ros::Time ExplonentialMovingAverageFilter::timeOfLastValue() const
 {
     return m_timeOfLastValue;
+}
+
+void ExplonentialMovingAverageFilter::checkReinit()
+{
+    if (m_timeout.toSec() == 0.0)
+        return;
+
+    if (ros::Time::now() - m_timeOfLastValue >= m_timeout)
+        reset();
+}
+
+void ExplonentialMovingAverageFilter::setAlpha(double alpha)
+{
+    m_alpha = alpha;
+}
+
+double ExplonentialMovingAverageFilter::alpha() const
+{
+    return m_alpha;
+}
+
+void ExplonentialMovingAverageFilter::setTimeout(const ros::Duration& timeout)
+{
+    m_timeout = timeout;
 }

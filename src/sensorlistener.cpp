@@ -117,9 +117,8 @@ void SensorListener::onSensorDataAvailable(const std::string& from, const std::s
     measurement.key.marker = markerMsg.id;
 
     // filter
-    // check if filter needs reset due to too old data
-    if (ros::Time::now() - m_rawSensorData[measurement.key].timeOfLastValue() > ros::Duration(1))
-        m_rawSensorData[measurement.key].reset();
+    // setup
+    m_rawSensorData[measurement.key].setTimeout(ros::Duration(0.25));
 
     // add the new data to the filter
     m_rawSensorData[measurement.key].addQuat(measurement.transform.getRotation());

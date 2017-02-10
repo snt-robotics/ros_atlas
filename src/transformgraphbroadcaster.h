@@ -3,6 +3,7 @@
 #include <tf2_ros/transform_broadcaster.h>
 
 #include "config.h"
+#include "filters.h"
 #include "transformgraph.h"
 
 class TransformGraphBroadcaster
@@ -19,6 +20,7 @@ protected:
 private:
     tf2_ros::TransformBroadcaster m_tfbc;
 
+    std::map<std::string, ExplonentialMovingAverageFilter> m_filters;
     std::map<std::string, std::vector<Marker> > m_markers;
     std::map<std::string, std::vector<Sensor> > m_entitySensors;
     std::vector<WorldSensor> m_worldSensors;
