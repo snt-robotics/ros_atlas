@@ -6,39 +6,35 @@
 
 /**
  * @brief The Sensor struct
- * @var name is the name of sensor and its coordinate frame
- * @var topic must comply to the definition
- * @var transf denotes the transformation from the sensor frame to the baselink
  */
 struct Sensor
 {
-    std::string name;
-    std::string topic;
-    tf2::Transform transf = tf2::Transform::getIdentity();
+    enum class Type
+    {
+        /// Marker based sensors (e.g. cameras)
+        /// Expects topics of type MarkerData
+        /// (default)
+        MarkerBased,
+
+        /// Non marker based sensors (e.g. GPS, optitrack)
+        /// Expects topics of type PoseStamped
+        NonMarkerBased
+    };
+    std::string name; ///< the name of sensor and its coordinate frame
+    std::string topic; ///< the ROS topic. Message type depends on sensor type.
+    tf2::Transform transf = tf2::Transform::getIdentity(); ///< transform to world frame
+    Type type             = Type::MarkerBased; ///< the type of the sensor (see Type)
+    double sigma          = 1.0; ///< only used if not provided by the topic
+    int fakeId            = -1; ///< private
 };
 
 /**
- * @brief The WorldSensor struct
- * @var name: Name of the sensor
- * @var entity: Entity name which the sensor is measuring
- * @var topic: The ROS topic of type stamped pose
- * @var sigma: The standrad deviation
+ * @brief The Marker struct
  */
-struct WorldSensor
+struct Marker
 {
-    enum class Type
-    {
-        None, ///< unspecified
-        Global, ///< Non marker based (e.g. GPS)
-        Camera ///< Camera, marker based
-    };
-    std::string name;
-    std::string entity;
-    std::string topic;
-    tf2::Transform transf = tf2::Transform::getIdentity(); ///< transform to world frame
-    Type type             = Type::None;
-    double sigma          = 1.0;
-    int fakeId            = -1;
+    int id = -1; ///< id of the marker. Valid IDs are > 0.
+    tf2::Transform transf; ///< transformation of the marker relative to its parent
 };
 
 /**
@@ -51,19 +47,7 @@ struct Entity
 {
     std::string name;
     std::vector<Sensor> sensors;
-};
-
-/**
- * @brief The Marker struct
- * Defines a marker by id and reference frame
- * @var transf denotes the transformation from the marker to the
- * origin of the frame it is defined in
- */
-struct Marker
-{
-    int id = -1;
-    std::string ref;
-    tf2::Transform transf;
+    std::vector<Marker> markers;
 };
 
 /**
@@ -105,18 +89,6 @@ public:
     std::vector<Entity> entities() const;
 
     /**
-     * @brief markers
-     * @return the markers defined in the config file
-     */
-    std::vector<Marker> markers() const;
-
-    /**
-     * @brief worldSensors
-     * @return the world sensors as specified in the config file
-     */
-    std::vector<WorldSensor> worldSensors() const;
-
-    /**
      * @brief options
      * @return the options as specified in the config file
      */
@@ -139,7 +111,5 @@ protected:
 
 private:
     std::vector<Entity> m_entities;
-    std::vector<Marker> m_markers;
-    std::vector<WorldSensor> m_worldSensors;
     Options m_options;
 };

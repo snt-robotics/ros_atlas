@@ -4,18 +4,15 @@
 
 TransformGraphBroadcaster::TransformGraphBroadcaster(const Config& config)
 {
-    // load data from config
-    for (const auto& marker : config.markers())
-        m_markers[marker.ref].push_back(marker);
-
+    // load entities
     for (const auto& entity : config.entities())
     {
-        m_entitySensors[entity.name] = entity.sensors;
+        m_entities[entity.name] = entity;
+
+        // cfg filter
         m_filters[entity.name].setTimeout(ros::Duration(0.25));
         m_filters[entity.name].setAlpha(0.1);
     }
-
-    m_worldSensors = config.worldSensors();
 
     m_publishWorldSensors  = config.options().publishWorldSensors;
     m_publishEntitySensors = config.options().publishEntitySensors;
@@ -32,6 +29,8 @@ void TransformGraphBroadcaster::broadcast(const TransformGraph& graph)
         {
             // this method throws if a lookup is not possible
             pose = graph.lookupPose(entityName);
+
+            // filter the pose
             m_filters[entityName].addPose(pose);
             pose = m_filters[entityName].pose();
 
@@ -42,14 +41,14 @@ void TransformGraphBroadcaster::broadcast(const TransformGraph& graph)
             if (m_publishMarkers)
             {
                 // show the markers attached to that entity
-                for (const auto& marker : m_markers[entityName])
+                for (const auto& marker : m_entities[entityName].markers)
                     broadcast(entityName, "Marker " + std::to_string(marker.id), marker.transf);
             }
 
             if (m_publishEntitySensors)
             {
                 // show the sensors attached to that entity
-                for (const auto& sensor : m_entitySensors[entityName])
+                for (const auto& sensor : m_entities[entityName].sensors)
                     broadcast(entityName, entityName + "-" + sensor.name, sensor.transf);
             }
         }
@@ -57,12 +56,6 @@ void TransformGraphBroadcaster::broadcast(const TransformGraph& graph)
         {
             // no lookup possible
         }
-    }
-
-    if (m_publishWorldSensors)
-    {
-        for (const auto& sensor : m_worldSensors)
-            broadcast("world", sensor.name, sensor.transf);
     }
 }
 

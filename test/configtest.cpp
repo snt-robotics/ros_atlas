@@ -2,49 +2,65 @@
 
 #include "../src/config.h"
 
-const std::string yamlInput = "entities:\n"
-                              "  - entity:\n"
-                              "    name: 'ardrone0'\n"
-                              "    sensors:\n"
-                              "      - sensor:\n"
-                              "        name: 'fontcam'\n"
-                              "        topic: 'aruco/ardrone1/etc'\n"
-                              "        transform:\n"
-                              "          origin: [1, 0, 0]\n"
-                              "          rot: [0, 0, 0, 1]\n"
-                              "\n"
-                              "  - entity:\n"
-                              "    name: 'ardrone1'\n"
-                              "\n"
-                              "markers:\n"
-                              "  - marker:\n"
-                              "    id: 1\n"
-                              "    ref: 'world'\n"
-                              "    transform:\n"
-                              "      origin: [1, 0, 0]\n"
-                              "      rot: [0, 1, 0, 1]\n"
-                              "\n"
-                              "  - marker:\n"
-                              "    id: 4\n"
-                              "    ref: 'ardrone1'\n"
-                              "    transform:\n"
-                              "      origin: [1, 0, 0]\n"
-                              "      rot: [0, 0, 0, 1]\n"
-                              "\n"
-                              "world:\n"
-                              "  - sensor:\n"
-                              "    name: 'optitrack0'\n"
-                              "    type: 'Global'\n"
-                              "    topic: '/Ardrone2SimpleLinModel_HASHMARK_0/pose'\n"
-                              "    entity: 'ardrone0'\n"
-                              "    sigma: 0.5\n"
-                              "\n"
-                              "  - sensor:\n"
-                              "    name: 'optitrack1'\n"
-                              "    type: 'Global'\n"
-                              "    topic: '/Ardrone2SimpleLinModel_HASHMARK_1/pose'\n"
-                              "    entity: 'ardrone1'\n"
-                              "    sigma: 0.5";
+const std::string yamlInput = //
+    "options:\n"
+    "  # node settings\n"
+    "  loopRate: 60.0 # Hz\n"
+    "\n"
+    "  # graph settings\n"
+    "  decayDuration: 0.25 # seconds\n"
+    "\n"
+    "  # transform publisher settings\n"
+    "  publishMarkers: true\n"
+    "  publishWorldSensors: true\n"
+    "  publishEntitySensors: true\n"
+    "\n"
+    "  # debug\n"
+    "  dbgDumpGraphInterval: 5.0 # seconds\n"
+    "  dbgDumpGraphFilename: 'dbgGraph.dot'\n"
+    "\n"
+    "entities:\n"
+    "  - entity:\n"
+    "    name: world\n"
+    "    sensors:\n"
+    "    - sensor:\n"
+    "      name: optitrack0\n"
+    "      topic: '/Ardrone2SimpleLinModel_HASHMARK_0/pose'\n"
+    "      type: 'NonMarkerBased'\n"
+    "      target: ardrone0\n"
+    "      sigma: 0.1\n"
+    "\n"
+    "    - sensor:\n"
+    "      name: optitrack1\n"
+    "      topic: '/Ardrone2SimpleLinModel_HASHMARK_1/pose'\n"
+    "      target: ardrone1\n"
+    "      type: 'NonMarkerBased'\n"
+    "      sigma: 0.1\n"
+    "\n"
+    "  - entity:\n"
+    "    name: ardrone0\n"
+    "    sensors:\n"
+    "    - sensor:\n"
+    "      name: fontcam\n"
+    "      topic: '/aruco_tracker/ardrone0_frontcam/detected_markers'\n"
+    "      transform: {origin: [1, 2, 3], rot: [0, 0, 0, 1]}\n"
+    "\n"
+    "  - entity:\n"
+    "    name: ardrone1\n"
+    "    sensors:\n"
+    "    - sensor:\n"
+    "      name: fontcam\n"
+    "      topic: '/aruco_tracker/ardrone1_frontcam/detected_markers'\n"
+    "      transform: {origin: [4, 5, 6], rot: [0, 0, 0, 1]}\n"
+    "\n"
+    "  # This entity is used to detect the position of marker 0\n"
+    "  # It has no physical meaning\n"
+    "  - Marker0Wrapper:\n"
+    "    markers:\n"
+    "    - marker:\n"
+    "      id: 0\n"
+    "      transform: {origin: [7, 8, 9], rot: [1, 0, 1, 0]}\n"
+    "";
 
 TEST(Config, basic)
 {
@@ -52,20 +68,19 @@ TEST(Config, basic)
 
     config.loadFromString(yamlInput);
 
-    ASSERT_EQ(2, config.entities().size());
-    ASSERT_EQ(4, config.markers().size());
+    ASSERT_EQ(4, config.entities().size()); // world, ardrone0, ardrone1, Marker0Wrapper
+    ASSERT_EQ(1, config.entities()[3].markers.size());
 
     // entity name check
-    ASSERT_EQ("ardrone0", config.entities()[0].name);
-    ASSERT_EQ("ardrone1", config.entities()[1].name);
+    ASSERT_EQ("ardrone0", config.entities()[1].name);
+    ASSERT_EQ("ardrone1", config.entities()[2].name);
 
     // marker id check
-    ASSERT_EQ(1, config.markers()[0].id);
-    ASSERT_EQ(4, config.markers()[1].id);
+    ASSERT_EQ(0, config.entities()[3].markers[0].id);
 
-    // mocap fake markers check
-    ASSERT_EQ(-1, config.markers()[2].id);
-    ASSERT_EQ(-2, config.markers()[3].id);
+    // fake markers check
+    ASSERT_EQ(-1, config.entities()[1].markers[0].id);
+    ASSERT_EQ(-2, config.entities()[2].markers[0].id);
 }
 
 TEST(Config, transform)
@@ -75,18 +90,8 @@ TEST(Config, transform)
     config.loadFromString(yamlInput);
 
     tf2::Transform transf;
-    transf.setOrigin({ 1, 0, 0 });
-    transf.setRotation({ 0, 1, 0, 1 });
+    transf.setOrigin({ 7, 8, 9 });
+    transf.setRotation({ 1, 0, 1, 0 });
 
-    ASSERT_EQ(1, config.markers()[0].id);
-    ASSERT_TRUE(transfEq(transf, config.markers()[0].transf));
-}
-
-TEST(Config, ref)
-{
-    Config config;
-
-    config.loadFromString(yamlInput);
-
-    ASSERT_EQ("world", config.markers()[0].ref);
+    ASSERT_TRUE(transfEq(transf, config.entities()[3].markers[0].transf));
 }

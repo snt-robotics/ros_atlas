@@ -135,12 +135,16 @@ public:
      */
     void onSensorDataAvailable(const std::string& from, const std::string& sensor, const tf2::Transform& sensorTransform, const atlas::MarkerData& markerMsg);
 
+protected:
+    void setupMarkerBasedSensor(const Entity& entity, const Sensor& sensor);
+    void setupNonMarkerBasedSensor(const Entity& entity, const Sensor& sensor);
+
 private:
     ros::NodeHandle m_node;
     std::vector<ros::Subscriber> m_subscribers;
 
     // used to map from the marker id to the target entity
-    std::map<int, Marker> m_markers;
+    std::map<int, std::pair<std::string, Marker> > m_markers;
 
     // sensor data
     SensorDataMap m_rawSensorData;

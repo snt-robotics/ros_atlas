@@ -8,9 +8,10 @@ TransformGraph::TransformGraph(double decayDuration)
 {
     // world is a special entity
     addEntity("world");
-    auto vertexInfo = boost::get(vertexInfo_t(), m_graph);
 
     // world is by definition always evaluated
+    auto vertexInfo = boost::get(vertexInfo_t(), m_graph);
+
     vertexInfo[m_labeledVertex["world"]].evaluated = true;
 }
 
@@ -23,6 +24,9 @@ TransformGraph::TransformGraph(const Config& config)
 
 void TransformGraph::addEntity(const std::string& name)
 {
+    if (hasEntity(name))
+        return;
+
     // adding entities is like adding vertices to the graph
     auto vertex           = boost::add_vertex(m_graph);
     m_labeledVertex[name] = vertex;
@@ -69,7 +73,7 @@ void TransformGraph::updateSensorData(const Measurement& measurement)
     else
     {
         // missing entity
-        ROS_WARN("Graph: Missing entity %s, %s", measurement.key.from.c_str(), measurement.key.to.c_str());
+        ROS_WARN("Graph: Missing entity '%s' or '%s'", measurement.key.from.c_str(), measurement.key.to.c_str());
     }
 }
 

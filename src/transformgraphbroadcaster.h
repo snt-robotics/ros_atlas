@@ -21,9 +21,7 @@ private:
     tf2_ros::TransformBroadcaster m_tfbc;
 
     std::map<std::string, ExplonentialMovingAverageFilter> m_filters;
-    std::map<std::string, std::vector<Marker> > m_markers;
-    std::map<std::string, std::vector<Sensor> > m_entitySensors;
-    std::vector<WorldSensor> m_worldSensors;
+    std::map<std::string, Entity> m_entities;
 
     bool m_publishMarkers       = true;
     bool m_publishEntitySensors = true;
