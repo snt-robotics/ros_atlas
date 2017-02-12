@@ -22,10 +22,10 @@ struct Sensor
     };
     std::string name; ///< the name of sensor and its coordinate frame
     std::string topic; ///< the ROS topic. Message type depends on sensor type.
+    std::string target; ///< target of the sensor (NonMarkerBased)
     tf2::Transform transf = tf2::Transform::getIdentity(); ///< transform to world frame
     Type type             = Type::MarkerBased; ///< the type of the sensor (see Type)
     double sigma          = 1.0; ///< only used if not provided by the topic
-    int fakeId            = -1; ///< private
 };
 
 /**

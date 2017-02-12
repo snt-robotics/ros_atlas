@@ -77,10 +77,6 @@ TEST(Config, basic)
 
     // marker id check
     ASSERT_EQ(0, config.entities()[3].markers[0].id);
-
-    // fake markers check
-    ASSERT_EQ(-1, config.entities()[1].markers[0].id);
-    ASSERT_EQ(-2, config.entities()[2].markers[0].id);
 }
 
 TEST(Config, transform)

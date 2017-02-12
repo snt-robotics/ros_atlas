@@ -36,7 +36,7 @@ SensorListener::SensorListener(const Config& config)
     }
 }
 
-void SensorListener::onSensorDataAvailable(const std::string& from, const std::string& sensor, const tf2::Transform& sensorTransform, const atlas::MarkerData& markerMsg)
+void SensorListener::onSensorDataAvailable(const std::string& from, const std::string& to, const std::string& sensor, const tf2::Transform& sensorTransform, const tf2::Transform& entityMarkerTransform, const atlas::MarkerData& markerMsg)
 {
     // store the transformation of the marker in the sensor space
     tf2::Transform markerTransf;
@@ -44,7 +44,7 @@ void SensorListener::onSensorDataAvailable(const std::string& from, const std::s
     markerTransf.setRotation({ markerMsg.rot.x, markerMsg.rot.y, markerMsg.rot.z, markerMsg.rot.w });
 
     // calculate the transform
-    tf2::Transform transf = sensorTransform * markerTransf * m_markers[markerMsg.id].second.transf.inverse();
+    tf2::Transform transf = sensorTransform * markerTransf * entityMarkerTransform.inverse();
 
     // store it as raw data that needs filtering
     Measurement measurement;
@@ -52,7 +52,7 @@ void SensorListener::onSensorDataAvailable(const std::string& from, const std::s
     measurement.stamp      = ros::Time::now();
     measurement.sigma      = markerMsg.sigma;
     measurement.key.from   = from;
-    measurement.key.to     = m_markers[markerMsg.id].first;
+    measurement.key.to     = to;
     measurement.key.sensor = sensor;
     measurement.key.marker = markerMsg.id;
 
@@ -78,7 +78,10 @@ void SensorListener::setupMarkerBasedSensor(const Entity& entity, const Sensor& 
     // callback lambda function
     // provides aditional values to the callback like the name of the reference frame
     boost::function<SensorCallback> callbackSensor = [this, transform, from, sensorName](const atlas::MarkerDataConstPtr markerData) {
-        onSensorDataAvailable(from, sensorName, transform, *markerData);
+        const auto to                    = m_markers[markerData->id].first;
+        const auto entityMarkerTransform = m_markers[markerData->id].second.transf;
+
+        onSensorDataAvailable(from, to, sensorName, transform, entityMarkerTransform, *markerData);
     };
 
     // tell ros we want to listen to that topic
@@ -92,24 +95,25 @@ void SensorListener::setupNonMarkerBasedSensor(const Entity& entity, const Senso
     using SensorCallback = void(geometry_msgs::PoseStampedConstPtr);
 
     // data passed to the callback lambda
-    auto sensorName = sensor.name;
-    auto id         = sensor.fakeId;
-    auto sigma      = sensor.sigma;
+    auto from         = entity.name;
+    auto to           = sensor.target;
+    auto sensorName   = sensor.name;
+    auto sigma        = sensor.sigma;
+    auto sensorTransf = sensor.transf;
 
     // callback lambda function
     // provides aditional values to the callback like the name of the reference frame
-    boost::function<SensorCallback> callbackSensor = [this, id, sigma, sensorName](const geometry_msgs::PoseStampedConstPtr data) {
+    boost::function<SensorCallback> callbackSensor = [this, from, to, sigma, sensorName, sensorTransf](const geometry_msgs::PoseStampedConstPtr data) {
 
         // This marker does not exist.
         // Its sole purpose is to map the sensor
         // readings to an entity.
-        atlas::MarkerData fakeData;
-        fakeData.pos   = data->pose.position;
-        fakeData.rot   = data->pose.orientation;
-        fakeData.id    = id;
-        fakeData.sigma = sigma;
+        atlas::MarkerData dataAdapter;
+        dataAdapter.pos   = data->pose.position;
+        dataAdapter.rot   = data->pose.orientation;
+        dataAdapter.sigma = sigma;
 
-        onSensorDataAvailable("world", sensorName, tf2::Transform::getIdentity(), fakeData);
+        onSensorDataAvailable(from, to, sensorName, sensorTransf, tf2::Transform::getIdentity(), dataAdapter);
     };
 
     // tell ros we want to listen to that topic

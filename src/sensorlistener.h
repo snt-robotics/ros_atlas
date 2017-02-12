@@ -133,7 +133,7 @@ public:
      * @param sensorTransform: The transformation from the sensor to the baselink of "from"
      * @param markerMsg: The marker message
      */
-    void onSensorDataAvailable(const std::string& from, const std::string& sensor, const tf2::Transform& sensorTransform, const atlas::MarkerData& markerMsg);
+    void onSensorDataAvailable(const std::string& from, const std::string& to, const std::string& sensor, const tf2::Transform& sensorTransform, const tf2::Transform& entityMarkerTransform, const atlas::MarkerData& markerMsg);
 
 protected:
     void setupMarkerBasedSensor(const Entity& entity, const Sensor& sensor);

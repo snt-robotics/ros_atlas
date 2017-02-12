@@ -15,7 +15,7 @@ TEST(Sensors, test1)
     msg.sigma = 1.0;
     msg.id    = 0;
 
-    listener.onSensorDataAvailable("source", "testSensor", transform, msg);
+    listener.onSensorDataAvailable("source", "target", "testSensor", transform, tf2::Transform::getIdentity(), msg);
     auto sensorData = listener.filteredSensorData();
     auto result     = sensorData.front().transform.getOrigin();
 

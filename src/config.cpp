@@ -67,9 +67,6 @@ tf2::Transform Config::parseTransform(const YAML::Node& node) const
 
 void Config::parseRoot(const YAML::Node& node)
 {
-    // fake marker counter
-    int markerId = 0;
-
     // sensor type conversion
     std::map<std::string, Sensor::Type> typeMap = {
         { "MarkerBased", Sensor::Type::MarkerBased },
@@ -85,8 +82,6 @@ void Config::parseRoot(const YAML::Node& node)
     if (!node["options"])
         ROS_WARN("Config: Cannot find 'options'");
 
-    std::map<std::string, std::vector<Marker> > fakeMarkers;
-
     // load the entities
     for (const YAML::Node& entity : node["entities"])
     {
@@ -101,23 +96,8 @@ void Config::parseRoot(const YAML::Node& node)
             sensorData.topic  = sensor["topic"].as<std::string>("undefined");
             sensorData.type   = typeMap[sensor["type"].as<std::string>("MarkerBased")];
             sensorData.sigma  = sensor["sigma"].as<double>(1.0);
+            sensorData.target = sensor["target"].as<std::string>("undefined");
             sensorData.transf = parseTransform(sensor["transform"]);
-
-            // Non marker based sensors use fake markers (ID < 0) as they do not actually detect markers
-            if (sensorData.type == Sensor::Type::NonMarkerBased)
-            {
-                const auto targetEntity = sensor["target"].as<std::string>("undefined");
-
-                // assign the fake id
-                sensorData.fakeId = --markerId;
-
-                Marker fakeMarker;
-                fakeMarker.id     = markerId;
-                fakeMarker.transf = tf2::Transform::getIdentity();
-
-                // add the fake marker
-                fakeMarkers[targetEntity].push_back(fakeMarker);
-            }
 
             // add the sensor
             entityData.sensors.push_back(sensorData);
@@ -135,14 +115,6 @@ void Config::parseRoot(const YAML::Node& node)
 
         // add the entity
         m_entities.push_back(entityData);
-    }
-
-    // assign the fake markers to the entities
-    for (auto& entity : m_entities)
-    {
-        entity.markers.insert(entity.markers.end(),
-            fakeMarkers[entity.name].begin(),
-            fakeMarkers[entity.name].end());
     }
 
     // load the options
