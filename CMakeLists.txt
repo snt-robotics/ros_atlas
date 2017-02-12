@@ -139,7 +139,6 @@ SET(SRC_FILES
    src/csvlogger.cpp
    src/sensorlistener.cpp
    src/filters.cpp
-   src/world.cpp
    src/transformgraph.cpp
    src/helpers.cpp
    src/kalmanfilter.cpp
