@@ -30,5 +30,5 @@ void CSVLogger::log(std::string source, int id, float distance, const tf::Stampe
                       << quad.z() << ";" //
                       << quad.w() << ";" //
                       << distance //
-                      << std::endl; //
+                      << '\n'; //
 }

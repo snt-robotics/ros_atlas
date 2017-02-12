@@ -16,13 +16,14 @@ SensorListener::SensorListener(const Config& config)
     {
         for (const auto& sensor : entity.sensors)
         {
-            if (sensor.type == Sensor::Type::MarkerBased)
+            switch (sensor.type)
             {
+            case Sensor::Type::MarkerBased:
                 setupMarkerBasedSensor(entity, sensor);
-            }
-            else
-            {
+                break;
+            case Sensor::Type::NonMarkerBased:
                 setupNonMarkerBasedSensor(entity, sensor);
+                break;
             }
         }
 
@@ -87,6 +88,7 @@ void SensorListener::setupMarkerBasedSensor(const Entity& entity, const Sensor& 
 
 void SensorListener::setupNonMarkerBasedSensor(const Entity& entity, const Sensor& sensor)
 {
+    UNUSED(entity);
     using SensorCallback = void(geometry_msgs::PoseStampedConstPtr);
 
     // data passed to the callback lambda
@@ -96,7 +98,7 @@ void SensorListener::setupNonMarkerBasedSensor(const Entity& entity, const Senso
 
     // callback lambda function
     // provides aditional values to the callback like the name of the reference frame
-    boost::function<SensorCallback> callbackSensor = [this, sensorName, id, sigma](const geometry_msgs::PoseStampedConstPtr data) {
+    boost::function<SensorCallback> callbackSensor = [this, id, sigma, sensorName](const geometry_msgs::PoseStampedConstPtr data) {
 
         // This marker does not exist.
         // Its sole purpose is to map the sensor

@@ -99,9 +99,9 @@ void Config::parseRoot(const YAML::Node& node)
             Sensor sensorData;
             sensorData.name   = sensor["name"].as<std::string>("undefined");
             sensorData.topic  = sensor["topic"].as<std::string>("undefined");
-            sensorData.transf = parseTransform(sensor["transform"]);
             sensorData.type   = typeMap[sensor["type"].as<std::string>("MarkerBased")];
             sensorData.sigma  = sensor["sigma"].as<double>(1.0);
+            sensorData.transf = parseTransform(sensor["transform"]);
 
             // Non marker based sensors use fake markers (ID < 0) as they do not actually detect markers
             if (sensorData.type == Sensor::Type::NonMarkerBased)
