@@ -86,13 +86,13 @@ void Config::parseRoot(const YAML::Node& node)
     for (const YAML::Node& entity : node["entities"])
     {
         Entity entityData;
-        entityData.name = entity["name"].as<std::string>("undefined");
+        entityData.name = entity["entity"].as<std::string>("undefined");
 
         // load the sensor data
         for (const auto& sensor : entity["sensors"])
         {
             Sensor sensorData;
-            sensorData.name   = sensor["name"].as<std::string>("undefined");
+            sensorData.name   = sensor["sensor"].as<std::string>("undefined");
             sensorData.topic  = sensor["topic"].as<std::string>("undefined");
             sensorData.type   = typeMap[sensor["type"].as<std::string>("MarkerBased")];
             sensorData.sigma  = sensor["sigma"].as<double>(1.0);
@@ -107,7 +107,7 @@ void Config::parseRoot(const YAML::Node& node)
         for (const auto& marker : entity["markers"])
         {
             Marker markerData;
-            markerData.id     = marker["id"].as<int>(-1);
+            markerData.id     = marker["marker"].as<int>(-1);
             markerData.transf = parseTransform(marker["transform"]);
 
             entityData.markers.push_back(markerData);

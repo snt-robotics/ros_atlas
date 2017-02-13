@@ -15,33 +15,26 @@ options:
   dbgDumpGraphFilename: '/home/paul/dbgGraph.dot'
 
 entities:
-  - entity:
-    name: world
+  - entity: world
     markers:
       # This markers position is known in world coordinates
       # We use it to estimate the pose of the drones
-      - marker:
-        id: 0
-        ref: 'world'
+      - marker: 0
         transform:
           origin: [-0.00452, -0.05223, 0.0089]
           rot: [-90,180,0] # YPR notation (in degrees)
 
-  - entity:
-    name: 'ardrone0'
+  - entity: ardrone0
     sensors:
-    - sensor:
-      name: 'fontcam'
+    - sensor: fontcam
       topic: '/aruco_tracker/ardrone0_frontcam/detected_markers'
       transform:
         origin: [0.185, 0, -0.03]
         rot: [0.606109, -0.606109, 0.364187, -0.364187]
 
-  - entity:
-    name: 'ardrone1'
+  - entity: ardrone1
     sensors:
-    - sensor:
-      name: 'fontcam'
+    - sensor: fontcam
       topic: '/aruco_tracker/ardrone1_frontcam/detected_markers'
       transform:
         origin: [0.185, 0, -0.03]
