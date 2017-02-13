@@ -78,10 +78,19 @@ void SensorListener::setupMarkerBasedSensor(const Entity& entity, const Sensor& 
     // callback lambda function
     // provides aditional values to the callback like the name of the reference frame
     boost::function<SensorCallback> callbackSensor = [this, transform, from, sensorName](const atlas::MarkerDataConstPtr markerData) {
-        const auto to                    = m_markers[markerData->id].first;
-        const auto entityMarkerTransform = m_markers[markerData->id].second.transf;
+        // check if the marker is known
+        auto keyvalItr = m_markers.find(markerData->id);
+        if (keyvalItr != m_markers.end())
+        {
+            const auto to                    = keyvalItr->second.first;
+            const auto entityMarkerTransform = keyvalItr->second.second.transf;
 
-        onSensorDataAvailable(from, to, sensorName, transform, entityMarkerTransform, *markerData);
+            onSensorDataAvailable(from, to, sensorName, transform, entityMarkerTransform, *markerData);
+        }
+        else
+        {
+            ROS_WARN_ONCE("Unknown marker (id: %i)", markerData->id);
+        }
     };
 
     // tell ros we want to listen to that topic

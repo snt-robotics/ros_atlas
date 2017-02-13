@@ -27,7 +27,5 @@ TEST(Sensors, test1)
     auto result     = sensorData.front().transform.getOrigin();
 
     // 10 + 5 - 2
-    tf2::Vector3 expectedPos = { 13, 0, 0 };
-
-    ASSERT_TRUE(vec3Eq(expectedPos, result));
+    ASSERT_TRUE(vec3Eq({ 13, 0, 0 }, result));
 }
