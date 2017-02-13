@@ -226,6 +226,12 @@ public:
     void save(const std::string& filename);
 
     /**
+     * @brief toDot
+     * Generates a dot representation of the graph
+     */
+    std::string toDot() const;
+
+    /**
      * @brief clearEvalFlag
      * Clears the "evaluated" flag of all entites
      */

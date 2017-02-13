@@ -308,11 +308,19 @@ void TransformGraph::save(const std::string& filename)
 {
     std::ofstream file;
     file.open(filename, std::ofstream::out | std::ofstream::trunc);
+    file << toDot();
+}
+
+std::string TransformGraph::toDot() const
+{
+    std::stringstream ss;
 
     auto vertexInfo = boost::get(vertexInfo_t(), m_graph);
     auto edgeInfo   = boost::get(edgeInfo_t(), m_graph);
 
-    boost::write_graphviz(file, m_graph, boost::make_label_writer(vertexInfo), boost::make_label_writer(edgeInfo));
+    boost::write_graphviz(ss, m_graph, boost::make_label_writer(vertexInfo), boost::make_label_writer(edgeInfo));
+
+    return ss.str();
 }
 
 void TransformGraph::clearEvalFlag()

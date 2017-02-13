@@ -1,4 +1,5 @@
 #include "transformgraphbroadcaster.h"
+#include "std_msgs/String.h"
 
 #include <geometry_msgs/TransformStamped.h>
 
@@ -17,6 +18,9 @@ TransformGraphBroadcaster::TransformGraphBroadcaster(const Config& config)
     m_publishWorldSensors  = config.options().publishWorldSensors;
     m_publishEntitySensors = config.options().publishEntitySensors;
     m_publishMarkers       = config.options().publishMarkers;
+
+    // create publisher
+    m_dotGraphPublisher = m_node.advertise<std_msgs::String>("transformgraph", 10);
 }
 
 void TransformGraphBroadcaster::broadcast(const TransformGraph& graph)
@@ -56,6 +60,13 @@ void TransformGraphBroadcaster::broadcast(const TransformGraph& graph)
         {
             // no lookup possible
         }
+    }
+
+    if (m_publishDotGraph)
+    {
+        std_msgs::String msg;
+        msg.data = graph.toDot();
+        m_dotGraphPublisher.publish(msg);
     }
 }
 
