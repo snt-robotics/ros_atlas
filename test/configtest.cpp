@@ -39,7 +39,7 @@ const std::string yamlInput = //
     "    sensors:\n"
     "    - sensor: fontcam\n"
     "      topic: '/aruco_tracker/ardrone0_frontcam/detected_markers'\n"
-    "      transform: {origin: [1, 2, 3], rot: [0, 0, 0, 1]}\n"
+    "      transform: {origin: [1, 2, 3], rot: [90, 0, -180]}\n"
     "\n"
     "  - entity: ardrone1\n"
     "    sensors:\n"
@@ -113,4 +113,9 @@ TEST(Config, transform)
     transf.setRotation({ 1, 0, 1, 0 });
 
     ASSERT_TRUE(transfEq(transf, config.entities()[3].markers[0].transf));
+
+    //YPR
+    transf.setOrigin({ 1, 2, 3 });
+    transf.setRotation({ 0, 0.707, 0.707, 0 });
+    ASSERT_TRUE(transfEq(transf, config.entities()[1].sensors[0].transf));
 }
