@@ -5,21 +5,29 @@ TEST(Sensors, test1)
 {
     SensorListener listener;
 
-    tf2::Transform transform;
-    transform.setOrigin({ 10, 0, 0 });
-    transform.setRotation({ 0, 0, 0, 1 });
+    // from entity to sensor
+    tf2::Transform sensorTransform;
+    sensorTransform.setOrigin({ 10, 0, 0 });
+    sensorTransform.setRotation({ 0, 0, 0, 1 });
 
+    // from entity to marker
+    tf2::Transform entityMarkerTransform;
+    entityMarkerTransform.setOrigin({ 2, 0, 0 });
+    entityMarkerTransform.setRotation({ 0, 0, 0, 1 });
+
+    // from sensor to marker
     atlas::MarkerData msg;
     msg.pos.x = 5;
     msg.rot.w = 1;
     msg.sigma = 1.0;
     msg.id    = 0;
 
-    listener.onSensorDataAvailable("source", "target", "testSensor", transform, tf2::Transform::getIdentity(), msg);
+    listener.onSensorDataAvailable("source", "target", "testSensor", sensorTransform, entityMarkerTransform, msg);
     auto sensorData = listener.filteredSensorData();
     auto result     = sensorData.front().transform.getOrigin();
 
-    tf2::Vector3 expectedPos = { 15, 0, 0 };
+    // 10 + 5 - 2
+    tf2::Vector3 expectedPos = { 13, 0, 0 };
 
     ASSERT_TRUE(vec3Eq(expectedPos, result));
 }
