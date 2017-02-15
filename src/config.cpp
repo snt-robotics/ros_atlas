@@ -122,26 +122,14 @@ void Config::parseRoot(const YAML::Node& node)
 
     if (options)
     {
-        if (options["dbgDumpGraphFilename"])
-            m_options.dbgGraphFilename = options["dbgDumpGraphFilename"].as<std::string>("");
-
-        if (options["dbgDumpGraphInterval"])
-            m_options.dbgGraphInterval = options["dbgDumpGraphInterval"].as<double>(0);
-
-        if (options["loopRate"])
-            m_options.loopRate = options["loopRate"].as<double>(60.0);
-
-        if (options["decayDuration"])
-            m_options.decayDuration = options["decayDuration"].as<double>(0.25);
-
-        if (options["publishMarkers"])
-            m_options.publishMarkers = options["publishMarkers"].as<bool>(true);
-
-        if (options["publishWorldSensors"])
-            m_options.publishWorldSensors = options["publishWorldSensors"].as<bool>(true);
-
-        if (options["publishEntitySensors"])
-            m_options.publishEntitySensors = options["publishEntitySensors"].as<bool>(true);
+        m_options.dbgGraphFilename     = options["dbgDumpGraphFilename"].as<std::string>("");
+        m_options.dbgGraphInterval     = options["dbgDumpGraphInterval"].as<double>(0);
+        m_options.loopRate             = options["loopRate"].as<double>(60.0);
+        m_options.decayDuration        = options["decayDuration"].as<double>(0.25);
+        m_options.publishMarkers       = options["publishMarkers"].as<bool>(true);
+        m_options.publishWorldSensors  = options["publishWorldSensors"].as<bool>(true);
+        m_options.publishEntitySensors = options["publishEntitySensors"].as<bool>(true);
+        m_options.publishPoseTopics    = options["publishPoseTopics"].as<bool>(true);
     }
 }
 
@@ -167,6 +155,7 @@ void Config::dump() const
     std::cout << "  publishMarkers: " << m_options.publishMarkers << "\n";
     std::cout << "  publishWorldSensors: " << m_options.publishWorldSensors << "\n";
     std::cout << "  publishEntitySensors: " << m_options.publishEntitySensors << "\n";
+    std::cout << "  publishPoseTopics: " << m_options.publishPoseTopics << "\n";
 
     std::cout << "Entities:\n";
     for (const auto& entity : m_entities)

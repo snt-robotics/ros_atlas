@@ -62,6 +62,7 @@ struct Options
     bool publishMarkers       = true; ///< Publishes the markers via the ros tf system
     bool publishWorldSensors  = true; ///< Publishes the world sensors via the ros tf system
     bool publishEntitySensors = true; ///< Publishes the entity sensors via the ros tf system
+    bool publishPoseTopics    = true; ///< Publishes the fused poses as topics of type PoseStamped
 };
 
 class Config

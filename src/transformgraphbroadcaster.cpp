@@ -1,6 +1,7 @@
 #include "transformgraphbroadcaster.h"
 #include "std_msgs/String.h"
 
+#include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TransformStamped.h>
 
 TransformGraphBroadcaster::TransformGraphBroadcaster(const Config& config)
@@ -21,6 +22,13 @@ TransformGraphBroadcaster::TransformGraphBroadcaster(const Config& config)
 
     // create publisher
     m_dotGraphPublisher = m_node.advertise<std_msgs::String>("transformgraph", 10);
+
+    // create publish as topic publishers
+    if (m_publishPoseTopics)
+    {
+        for (const auto& entity : config.entities())
+            m_publishers[entity.name] = m_node.advertise<geometry_msgs::PoseStamped>("atlas/poses/" + entity.name, 10);
+    }
 }
 
 void TransformGraphBroadcaster::broadcast(const TransformGraph& graph)
@@ -54,6 +62,11 @@ void TransformGraphBroadcaster::broadcast(const TransformGraph& graph)
                 // show the sensors attached to that entity
                 for (const auto& sensor : m_entities[entityName].sensors)
                     broadcast(entityName, entityName + "-" + sensor.name, sensor.transf);
+            }
+
+            if (m_publishPoseTopics)
+            {
+                broadcast(entityName, pose);
             }
         }
         catch (const std::string&)
@@ -106,4 +119,22 @@ void TransformGraphBroadcaster::broadcast(const std::string& frame, const std::s
     transform.transform.translation.z = pose.pos.z();
 
     m_tfbc.sendTransform(transform);
+}
+
+void TransformGraphBroadcaster::broadcast(const std::string& entity, const Pose pose)
+{
+    geometry_msgs::PoseStamped poseMsg;
+    poseMsg.header.stamp    = ros::Time::now();
+    poseMsg.header.frame_id = "world";
+
+    poseMsg.pose.orientation.x = pose.rot.x();
+    poseMsg.pose.orientation.y = pose.rot.y();
+    poseMsg.pose.orientation.z = pose.rot.z();
+    poseMsg.pose.orientation.w = pose.rot.w();
+
+    poseMsg.pose.position.x = pose.pos.x();
+    poseMsg.pose.position.y = pose.pos.y();
+    poseMsg.pose.position.z = pose.pos.z();
+
+    m_publishers[entity].publish(poseMsg);
 }
