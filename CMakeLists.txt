@@ -12,7 +12,6 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   tf2
   tf2_ros
-  aruco_all_codes_tracker
 )
 
 ## System dependencies are found with CMake's conventions
