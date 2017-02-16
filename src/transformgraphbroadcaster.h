@@ -25,7 +25,7 @@ public:
 protected:
     void broadcast(const std::string& frame, const std::string& child, const tf2::Transform transf);
     void broadcast(const std::string& frame, const std::string& child, const Pose pose);
-    void broadcast(const std::string& entity, const Pose pose);
+    void broadcast(const std::string& entity, const Pose pose, int fuseCount);
 
 private:
     tf2_ros::TransformBroadcaster m_tfbc;

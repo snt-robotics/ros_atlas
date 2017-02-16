@@ -1,4 +1,5 @@
 #include "transformgraphbroadcaster.h"
+#include "atlas/FusedPose.h"
 #include "std_msgs/String.h"
 
 #include <geometry_msgs/PoseStamped.h>
@@ -27,7 +28,7 @@ TransformGraphBroadcaster::TransformGraphBroadcaster(const Config& config)
     if (m_publishPoseTopics)
     {
         for (const auto& entity : config.entities())
-            m_publishers[entity.name] = m_node.advertise<geometry_msgs::PoseStamped>("atlas/poses/" + entity.name, 10);
+            m_publishers[entity.name] = m_node.advertise<atlas::FusedPose>("atlas/fusedposes/" + entity.name, 10);
     }
 }
 
@@ -66,7 +67,7 @@ void TransformGraphBroadcaster::broadcast(const TransformGraph& graph)
 
             if (m_publishPoseTopics)
             {
-                broadcast(entityName, pose);
+                broadcast(entityName, pose, graph.fuseCount(entityName));
             }
         }
         catch (const std::string&)
@@ -121,20 +122,21 @@ void TransformGraphBroadcaster::broadcast(const std::string& frame, const std::s
     m_tfbc.sendTransform(transform);
 }
 
-void TransformGraphBroadcaster::broadcast(const std::string& entity, const Pose pose)
+void TransformGraphBroadcaster::broadcast(const std::string& entity, const Pose pose, int fuseCount)
 {
-    geometry_msgs::PoseStamped poseMsg;
-    poseMsg.header.stamp    = ros::Time::now();
-    poseMsg.header.frame_id = "world";
+    atlas::FusedPose fusedPoseMsg;
+    fusedPoseMsg.pose.header.stamp    = ros::Time::now();
+    fusedPoseMsg.pose.header.frame_id = "world";
+    fusedPoseMsg.fuseCount            = fuseCount;
 
-    poseMsg.pose.orientation.x = pose.rot.x();
-    poseMsg.pose.orientation.y = pose.rot.y();
-    poseMsg.pose.orientation.z = pose.rot.z();
-    poseMsg.pose.orientation.w = pose.rot.w();
+    fusedPoseMsg.pose.pose.orientation.x = pose.rot.x();
+    fusedPoseMsg.pose.pose.orientation.y = pose.rot.y();
+    fusedPoseMsg.pose.pose.orientation.z = pose.rot.z();
+    fusedPoseMsg.pose.pose.orientation.w = pose.rot.w();
 
-    poseMsg.pose.position.x = pose.pos.x();
-    poseMsg.pose.position.y = pose.pos.y();
-    poseMsg.pose.position.z = pose.pos.z();
+    fusedPoseMsg.pose.pose.position.x = pose.pos.x();
+    fusedPoseMsg.pose.pose.position.y = pose.pos.y();
+    fusedPoseMsg.pose.pose.position.z = pose.pos.z();
 
-    m_publishers[entity].publish(poseMsg);
+    m_publishers[entity].publish(fusedPoseMsg);
 }

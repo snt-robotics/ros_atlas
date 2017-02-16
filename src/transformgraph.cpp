@@ -56,6 +56,19 @@ std::vector<std::string> TransformGraph::entities() const
     return out;
 }
 
+int TransformGraph::fuseCount(const std::string& name) const
+{
+    auto itr = m_labeledVertex.find(name);
+
+    if (itr != m_labeledVertex.end())
+    {
+        auto vInfo = boost::get(vertexInfo_t(), m_graph);
+        return vInfo[itr->second].fuseCount;
+    }
+
+    return -1;
+}
+
 void TransformGraph::updateSensorData(const Measurement& measurement)
 {
 
@@ -263,6 +276,8 @@ void TransformGraph::eval()
         });
         const double minSigma = eInfo[*minItr].sensorData.sigma;
 
+        vInfo[currentVertex].fuseCount = 0;
+
         // evaluate edges
         for (auto edge : boost::make_iterator_range(itrs.first, itrs.second))
         {
@@ -289,6 +304,9 @@ void TransformGraph::eval()
 
             // the weight. Lower sigmas are weighted higher.
             const auto weight = minSigma / sigma;
+
+            // inc fuse count
+            vInfo[currentVertex].fuseCount++;
 
             // filter
             vInfo[currentVertex].filter.addVec3(result.getOrigin(), weight);

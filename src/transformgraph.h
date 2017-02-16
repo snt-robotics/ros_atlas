@@ -47,15 +47,14 @@ class TransformGraph
      */
     struct VertexInfo
     {
-        std::string name;
+        std::string name; ///< name of the vertex (entity
 
-        // the pose in the world frame
-        Pose pose;
+        Pose pose; ///< the pose in the world frame
 
-        //
-        WeightedMean filter; // filter used to fuse the sensor data
+        WeightedMean filter; ///< filter used to fuse the sensor data
         bool evaluated = false;
         int level      = 0;
+        int fuseCount  = 0; ///< the number of fused sources
 
         friend std::ostream& operator<<(std::ostream& os, const VertexInfo& info);
     };
@@ -160,6 +159,13 @@ public:
      * @return Returns a list of entity names
      */
     std::vector<std::string> entities() const;
+
+    /**
+     * @brief fuseCount
+     * @param name of the entity
+     * @return The number of fused sensor data for the given entity
+     */
+    int fuseCount(const std::string& name) const;
 
     /**
      * @brief updateSensorData
