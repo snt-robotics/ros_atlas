@@ -13,8 +13,8 @@ TransformGraphBroadcaster::TransformGraphBroadcaster(const Config& config)
         m_entities[entity.name] = entity;
 
         // cfg filter
-        m_filters[entity.name].setTimeout(ros::Duration(0.25));
-        m_filters[entity.name].setAlpha(0.1);
+        m_filters[entity.name].setTimeout(ros::Duration(entity.filterConfig.timeout));
+        m_filters[entity.name].setAlpha(entity.filterConfig.alpha);
     }
 
     m_publishWorldSensors  = config.options().publishWorldSensors;

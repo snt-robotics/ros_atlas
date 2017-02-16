@@ -38,6 +38,15 @@ struct Marker
 };
 
 /**
+ * @brief The FilterConfig struct
+ */
+struct FilterConfig
+{
+    double alpha   = 0.1; ///< exp. moving average constant
+    double timeout = 0.25; ///< seconds
+};
+
+/**
  * @brief The Entity struct
  * An entity is a generic named object
  * The name also defines the baselink of the object
@@ -48,6 +57,7 @@ struct Entity
     std::string name;
     std::vector<Sensor> sensors;
     std::vector<Marker> markers;
+    FilterConfig filterConfig;
 };
 
 /**
