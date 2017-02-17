@@ -10,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   message_generation
   std_msgs
+  geometry_msgs
   tf2
   tf2_ros
 )
@@ -109,6 +110,7 @@ catkin_package(
 #  LIBRARIES atlas
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
+    CATKIN_DEPENDS message_runtime std_msgs geometry_msgs
 )
 
 ###########
@@ -153,7 +155,7 @@ add_executable(atlas_node src/main.cpp ${SRC_FILES})
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(atlas_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(atlas_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(atlas_node
