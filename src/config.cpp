@@ -89,8 +89,7 @@ void Config::parseRoot(const YAML::Node& node)
         entityData.name = entity["entity"].as<std::string>("undefined");
 
         // load filter config
-        entityData.filterConfig.alpha   = entity["filterAlpha"].as<double>(0.1);
-        entityData.filterConfig.timeout = entity["filterTimeout"].as<double>(0.25);
+        entityData.filterConfig.alpha = entity["filterAlpha"].as<double>(0.1);
 
         // load the sensor data
         for (const auto& sensor : entity["sensors"])

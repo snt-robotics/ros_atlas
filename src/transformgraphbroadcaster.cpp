@@ -13,7 +13,7 @@ TransformGraphBroadcaster::TransformGraphBroadcaster(const Config& config)
         m_entities[entity.name] = entity;
 
         // cfg filter
-        m_filters[entity.name].setTimeout(ros::Duration(entity.filterConfig.timeout));
+        m_filters[entity.name].setTimeout(ros::Duration(config.options().decayDuration));
         m_filters[entity.name].setAlpha(entity.filterConfig.alpha);
     }
 

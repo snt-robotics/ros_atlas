@@ -42,8 +42,7 @@ struct Marker
  */
 struct FilterConfig
 {
-    double alpha   = 0.1; ///< exp. moving average constant
-    double timeout = 0.25; ///< seconds
+    double alpha = 0.1; ///< exp. moving average constant
 };
 
 /**
