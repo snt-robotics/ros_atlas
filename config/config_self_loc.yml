@@ -12,8 +12,9 @@ options:
   publishPoseTopics: true
 
   # debug
-  dbgDumpGraphInterval: 5.0 # seconds
-  dbgDumpGraphFilename: '/home/ros/dbgGraph.dot'
+  # You can visualize the graph by dumping it to disk
+  # dbgDumpGraphInterval: 5.0 # in seconds
+  # dbgDumpGraphFilename: '/home/somepath/dbgGraph.dot'
 
 entities:
   - entity: world
