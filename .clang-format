@@ -1,0 +1,4 @@
+BasedOnStyle: WebKit
+PointerBindsToType: true
+BreakBeforeBraces: Allman
+AlignConsecutiveAssignments: true
