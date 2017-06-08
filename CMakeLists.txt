@@ -93,7 +93,6 @@ SET(SRC_FILES
    src/filters.cpp
    src/transformgraph.cpp
    src/helpers.cpp
-   src/kalmanfilter.cpp
    src/transformgraphbroadcaster.cpp
 )
 
@@ -124,7 +123,6 @@ catkin_add_gtest(${PROJECT_NAME}-test
     test/sensortest.cpp
     test/configtest.cpp
     test/graphtest.cpp
-    test/kalman.cpp
     test/helpers.cpp
     test/main.cpp
 
