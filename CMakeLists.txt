@@ -89,7 +89,6 @@ include_directories(
 
 SET(SRC_FILES
    src/config.cpp
-   src/csvlogger.cpp
    src/sensorlistener.cpp
    src/filters.cpp
    src/transformgraph.cpp
